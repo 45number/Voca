@@ -167,7 +167,19 @@ class _FlashcardPageState extends State<FlashcardPage> {
     );
   }
 
+  // Future<void> playAudio() async {
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.play(audioFile);
+  // }
+
   Future<void> playAudio() async {
+    print('FLASHCARD playAudio()');
+
     final audioFile = currentWord.audioFile;
 
     if (audioFile == null || audioFile.isEmpty) {
@@ -185,20 +197,45 @@ class _FlashcardPageState extends State<FlashcardPage> {
     await preloadCurrentAudio();
   }
 
+  // Future<void> onCardTap() async {
+  //   if (!session.isRevealed) {
+  //     setState(() {
+  //       session.reveal();
+  //     });
+
+  //     if (!silentMode) {
+  //       WidgetsBinding.instance.addPostFrameCallback((_) {
+  //         playAudio();
+  //       });
+  //     }
+
+  //     return;
+  //   }
+
+  //   await nextCard();
+  // }
+
   Future<void> onCardTap() async {
+    print('CARD TAP revealed=${session.isRevealed}');
+
     if (!session.isRevealed) {
+      print('REVEAL');
+
       setState(() {
         session.reveal();
       });
 
       if (!silentMode) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          print('AUTO PLAY AUDIO');
           playAudio();
         });
       }
 
       return;
     }
+
+    print('NEXT CARD');
 
     await nextCard();
   }
@@ -209,7 +246,7 @@ class _FlashcardPageState extends State<FlashcardPage> {
     if (hasNext) {
       setState(() {});
 
-      await preloadCurrentAudio();
+      // await preloadCurrentAudio();
 
       return;
     }

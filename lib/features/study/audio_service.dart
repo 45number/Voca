@@ -23,7 +23,23 @@ class AudioService {
     _loadedPath = path;
   }
 
+  // Future<void> play(String path) async {
+  //   if (path.isEmpty) {
+  //     return;
+  //   }
+
+  //   if (_loadedPath != path) {
+  //     await preload(path);
+  //   }
+
+  //   await _player.seek(Duration.zero);
+
+  //   await _player.resume();
+  // }
+
   Future<void> play(String path) async {
+    print('AUDIO PLAY: $path');
+
     if (path.isEmpty) {
       return;
     }
@@ -36,6 +52,7 @@ class AudioService {
 
     await _player.resume();
   }
+  ///////
 
   Future<void> stop() async {
     await _player.stop();

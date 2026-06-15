@@ -316,7 +316,19 @@ class _SpellingPageState extends State<SpellingPage> {
     setState(() {});
   }
 
+  // Future<void> playAudio() async {
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.play(audioFile);
+  // }
+
   Future<void> playAudio() async {
+    print('SPELLING playAudio()');
+
     final audioFile = currentWord.audioFile;
 
     if (audioFile == null || audioFile.isEmpty) {
@@ -337,7 +349,7 @@ class _SpellingPageState extends State<SpellingPage> {
 
     textController.clear();
 
-    await preloadCurrentAudio();
+    // await preloadCurrentAudio();
 
     setState(() {});
   }
@@ -348,7 +360,7 @@ class _SpellingPageState extends State<SpellingPage> {
     if (hasNext) {
       textController.clear();
 
-      await preloadCurrentAudio();
+      // await preloadCurrentAudio();
 
       setState(() {});
 
@@ -360,7 +372,7 @@ class _SpellingPageState extends State<SpellingPage> {
 
       textController.clear();
 
-      await preloadCurrentAudio();
+      // await preloadCurrentAudio();
 
       setState(() {});
 
