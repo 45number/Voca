@@ -1,0 +1,92 @@
+import 'package:drift/drift.dart';
+
+import 'app_database.dart';
+
+class FolderRepository {
+  final AppDatabase database;
+
+  FolderRepository(this.database);
+
+  Future<List<Folder>> getFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.parentId.isNull() & f.deleted.equals(false))).get();
+  }
+
+  Future<List<Folder>> getChildFolders(String parentId) {
+    return (database.select(database.folders)
+          ..where((f) => f.parentId.equals(parentId) & f.deleted.equals(false)))
+        .get();
+  }
+
+  Future<void> createFolder(String name, {String? parentId}) async {
+    await database
+        .into(database.folders)
+        .insert(
+          FoldersCompanion.insert(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            name: name,
+            parentId: Value(parentId),
+            updatedAt: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
+  }
+
+  Future<void> renameFolder(String folderId, String newName) async {
+    await (database.update(
+      database.folders,
+    )..where((f) => f.id.equals(folderId))).write(
+      FoldersCompanion(
+        name: Value(newName),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  Future<void> softDeleteFolder(String folderId) async {
+    await (database.update(
+      database.folders,
+    )..where((f) => f.id.equals(folderId))).write(
+      FoldersCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  Future<void> softDeleteFolderTree(String folderId) async {
+    final children = await getChildFolders(folderId);
+
+    for (final child in children) {
+      await softDeleteFolderTree(child.id);
+    }
+
+    await softDeleteFolder(folderId);
+  }
+
+  Future<Folder?> getFolder(String folderId) {
+    return (database.select(database.folders)
+          ..where((f) => f.id.equals(folderId) & f.deleted.equals(false)))
+        .getSingleOrNull();
+  }
+
+  Future<List<Folder>> getFolderPath(String folderId) async {
+    final result = <Folder>[];
+
+    Folder? current = await getFolder(folderId);
+
+    while (current != null) {
+      result.insert(0, current);
+
+      final parentId = current.parentId;
+
+      if (parentId == null) {
+        break;
+      }
+
+      current = await getFolder(parentId);
+    }
+
+    return result;
+  }
+}
