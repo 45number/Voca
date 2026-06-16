@@ -74,7 +74,14 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
   }
 
   List<Folder> getChildFolders(String? parentId) {
-    return folders.where((folder) => folder.parentId == parentId).toList();
+    return folders
+        .where(
+          (folder) =>
+              folder.parentId == parentId &&
+              folder.id != widget.folder.id &&
+              !descendants.contains(folder.id),
+        )
+        .toList();
   }
 
   Widget buildFolderTree(Folder folder, int level) {
