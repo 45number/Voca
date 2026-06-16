@@ -16,7 +16,7 @@ Future<void> main() async {
 
   runApp(const VocaApp());
 }
-
+// Main class
 class VocaApp extends StatelessWidget {
   const VocaApp({super.key});
 
