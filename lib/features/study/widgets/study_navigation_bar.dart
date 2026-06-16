@@ -23,6 +23,8 @@ class StudyNavigationBar extends StatelessWidget {
 
   final bool silentMode;
 
+  final bool hasAudio;
+
   final bool? showWordFirst;
 
   final VoidCallback? onToggleFrontSide;
@@ -40,6 +42,7 @@ class StudyNavigationBar extends StatelessWidget {
     required this.loopCards,
     required this.randomOrder,
     required this.silentMode,
+    required this.hasAudio,
     this.showWordFirst,
     this.onToggleFrontSide,
   });
@@ -109,7 +112,7 @@ class StudyNavigationBar extends StatelessWidget {
         ),
 
         IconButton(
-          onPressed: onPlayAudio,
+          onPressed: hasAudio ? onPlayAudio : null,
           icon: const Icon(Icons.volume_up, size: 28),
         ),
 

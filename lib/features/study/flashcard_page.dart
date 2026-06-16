@@ -197,6 +197,9 @@ class _FlashcardPageState extends State<FlashcardPage> {
                 showWordFirst: frontSide == FrontSide.word,
 
                 onToggleFrontSide: toggleFrontSide,
+                hasAudio:
+                    currentWord.audioFile != null &&
+                    currentWord.audioFile!.isNotEmpty,
               ),
             ],
           ),

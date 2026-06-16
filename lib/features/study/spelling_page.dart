@@ -261,6 +261,9 @@ class _SpellingPageState extends State<SpellingPage> {
                 onToggleLoop: toggleLoopCards,
                 onToggleRandom: toggleRandom,
                 onToggleSilent: toggleSilentMode,
+                hasAudio:
+                    currentWord.audioFile != null &&
+                    currentWord.audioFile!.isNotEmpty,
               ),
             ],
           ),
