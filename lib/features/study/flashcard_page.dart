@@ -13,7 +13,7 @@ import 'study_session_controller.dart';
 
 import 'widgets/flashcard_view.dart';
 import 'widgets/study_progress.dart';
-import 'widgets/study_navigation_bar.dart';
+import 'widgets/spelling_navigation_bar.dart';
 
 import '../decks/deck_info.dart';
 import '../folders/folder_controller.dart';
@@ -177,15 +177,25 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
               const SizedBox(height: AppSpacing.md),
 
-              StudyNavigationBar(
-                currentIndex: session.currentIndex,
-                totalCount: studyWords.length,
-                isRevealed: session.isRevealed,
-                isDifficult: currentWord.difficultMemorizing,
+              SpellingNavigationBar(
                 onPrevious: previousCard,
                 onNext: nextCard,
                 onPlayAudio: playAudio,
                 onToggleDifficult: toggleDifficultMemorizing,
+
+                isDifficult: currentWord.difficultMemorizing,
+
+                loopCards: loopCards,
+                randomOrder: randomOrder,
+                silentMode: silentMode,
+
+                onToggleLoop: toggleLoopCards,
+                onToggleRandom: toggleRandom,
+                onToggleSilent: toggleSilentMode,
+
+                showWordFirst: frontSide == FrontSide.word,
+
+                onToggleFrontSide: toggleFrontSide,
               ),
             ],
           ),

@@ -23,6 +23,10 @@ class SpellingNavigationBar extends StatelessWidget {
 
   final bool silentMode;
 
+  final bool? showWordFirst;
+
+  final VoidCallback? onToggleFrontSide;
+
   const SpellingNavigationBar({
     super.key,
     required this.onPrevious,
@@ -36,6 +40,8 @@ class SpellingNavigationBar extends StatelessWidget {
     required this.loopCards,
     required this.randomOrder,
     required this.silentMode,
+    this.showWordFirst,
+    this.onToggleFrontSide,
   });
 
   @override
@@ -63,6 +69,10 @@ class SpellingNavigationBar extends StatelessWidget {
               case 'silent':
                 onToggleSilent();
                 break;
+
+              case 'frontSide':
+                onToggleFrontSide?.call();
+                break;
             }
           },
           itemBuilder: (context) => [
@@ -83,6 +93,13 @@ class SpellingNavigationBar extends StatelessWidget {
               checked: silentMode,
               child: const Text('Silent mode'),
             ),
+
+            if (showWordFirst != null)
+              CheckedPopupMenuItem(
+                value: 'frontSide',
+                checked: showWordFirst!,
+                child: const Text('Show word first'),
+              ),
           ],
         ),
 
