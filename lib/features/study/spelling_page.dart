@@ -10,7 +10,8 @@ import 'spelling_data.dart';
 import 'spelling_session_controller.dart';
 import 'study_complete_dialog.dart';
 
-import 'widgets/spelling_navigation_bar.dart';
+// import 'widgets/spelling_navigation_bar.dart';
+import 'widgets/study_navigation_bar.dart';
 import 'widgets/spelling_result_view.dart';
 import 'widgets/study_progress.dart';
 
@@ -245,7 +246,7 @@ class _SpellingPageState extends State<SpellingPage> {
                 ),
               const SizedBox(height: AppSpacing.spellingSectionSpacing),
 
-              SpellingNavigationBar(
+              StudyNavigationBar(
                 onPrevious: previousWord,
                 onNext: nextWord,
                 onPlayAudio: playAudio,
@@ -299,16 +300,6 @@ class _SpellingPageState extends State<SpellingPage> {
 
     setState(() {});
   }
-
-  // Future<void> playAudio() async {
-  //   final audioFile = currentWord.audioFile;
-
-  //   if (audioFile == null || audioFile.isEmpty) {
-  //     return;
-  //   }
-
-  //   await audioService.play(audioFile);
-  // }
 
   Future<void> playAudio() async {
     print('SPELLING playAudio()');

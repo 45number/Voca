@@ -1,15 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../core/theme/theme.dart';
-
 class StudyNavigationBar extends StatelessWidget {
-  final int currentIndex;
-  final int totalCount;
-
-  final bool isRevealed;
-
-  final bool isDifficult;
-
   final VoidCallback onPrevious;
 
   final VoidCallback onNext;
@@ -18,59 +9,113 @@ class StudyNavigationBar extends StatelessWidget {
 
   final VoidCallback onToggleDifficult;
 
+  final VoidCallback onToggleLoop;
+
+  final VoidCallback onToggleRandom;
+
+  final VoidCallback onToggleSilent;
+
+  final bool isDifficult;
+
+  final bool loopCards;
+
+  final bool randomOrder;
+
+  final bool silentMode;
+
+  final bool? showWordFirst;
+
+  final VoidCallback? onToggleFrontSide;
+
   const StudyNavigationBar({
     super.key,
-    required this.currentIndex,
-    required this.totalCount,
-    required this.isRevealed,
-    required this.isDifficult,
     required this.onPrevious,
     required this.onNext,
     required this.onPlayAudio,
     required this.onToggleDifficult,
+    required this.onToggleLoop,
+    required this.onToggleRandom,
+    required this.onToggleSilent,
+    required this.isDifficult,
+    required this.loopCards,
+    required this.randomOrder,
+    required this.silentMode,
+    this.showWordFirst,
+    this.onToggleFrontSide,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        Text(isRevealed ? 'Tap card for next word' : 'Tap card to reveal'),
+        IconButton(
+          onPressed: onPrevious,
+          icon: const Icon(Icons.chevron_left, size: 32),
+        ),
 
-        const SizedBox(height: AppSpacing.lg),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.settings),
+          onSelected: (value) {
+            switch (value) {
+              case 'loop':
+                onToggleLoop();
+                break;
 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            IconButton(
-              onPressed: onPrevious,
-              icon: const Icon(Icons.chevron_left, size: 32),
+              case 'random':
+                onToggleRandom();
+                break;
+
+              case 'silent':
+                onToggleSilent();
+                break;
+
+              case 'frontSide':
+                onToggleFrontSide?.call();
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            CheckedPopupMenuItem(
+              value: 'loop',
+              checked: loopCards,
+              child: const Text('Loop cards'),
             ),
 
-            IconButton(
-              onPressed: onPlayAudio,
-              icon: const Icon(Icons.volume_up, size: 28),
+            CheckedPopupMenuItem(
+              value: 'random',
+              checked: randomOrder,
+              child: const Text('Random order'),
             ),
 
-            IconButton(
-              onPressed: onToggleDifficult,
-              icon: Icon(
-                isDifficult ? Icons.star : Icons.star_border,
-                size: 30,
+            CheckedPopupMenuItem(
+              value: 'silent',
+              checked: silentMode,
+              child: const Text('Silent mode'),
+            ),
+
+            if (showWordFirst != null)
+              CheckedPopupMenuItem(
+                value: 'frontSide',
+                checked: showWordFirst!,
+                child: const Text('Show word first'),
               ),
-            ),
-
-            IconButton(
-              onPressed: onNext,
-              icon: const Icon(Icons.chevron_right, size: 32),
-            ),
           ],
         ),
 
-        const SizedBox(height: AppSpacing.sm),
+        IconButton(
+          onPressed: onToggleDifficult,
+          icon: Icon(isDifficult ? Icons.star : Icons.star_border, size: 30),
+        ),
 
-        Text(
-          '${currentIndex + 1} / $totalCount',
-          style: AppTypography.progress,
+        IconButton(
+          onPressed: onPlayAudio,
+          icon: const Icon(Icons.volume_up, size: 28),
+        ),
+
+        IconButton(
+          onPressed: onNext,
+          icon: const Icon(Icons.chevron_right, size: 32),
         ),
       ],
     );

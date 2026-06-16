@@ -13,7 +13,8 @@ import 'study_session_controller.dart';
 
 import 'widgets/flashcard_view.dart';
 import 'widgets/study_progress.dart';
-import 'widgets/spelling_navigation_bar.dart';
+// import 'widgets/spelling_navigation_bar.dart';
+import 'widgets/study_navigation_bar.dart';
 
 import '../decks/deck_info.dart';
 import '../folders/folder_controller.dart';
@@ -177,7 +178,7 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
               const SizedBox(height: AppSpacing.md),
 
-              SpellingNavigationBar(
+              StudyNavigationBar(
                 onPrevious: previousCard,
                 onNext: nextCard,
                 onPlayAudio: playAudio,
