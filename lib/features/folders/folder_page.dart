@@ -270,104 +270,26 @@ class _FolderPageState extends State<FolderPage> {
   }
 
   Future<void> moveFolder(Folder folder) async {
-    await MoveFolderDialog.show(context: context, folder: folder);
-
-    return;
-
-    final folders = await controller.getAllFolders();
-
-    final descendants = await controller.getDescendantFolderIds(folder.id);
-
-    if (!mounted) {
-      return;
-    }
-
-    String? selectedParentId;
-
-    final result = await showDialog<Object?>(
+    final result = await MoveFolderDialog.show(
       context: context,
-      builder: (context) {
-        String? tempParentId = folder.parentId;
-
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Move "${folder.name}"'),
-              content: SizedBox(
-                width: 400,
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      RadioListTile<String?>(
-                        value: null,
-                        groupValue: tempParentId,
-                        title: const Text('Root'),
-                        onChanged: (value) {
-                          setState(() {
-                            tempParentId = value;
-                          });
-                        },
-                      ),
-
-                      ...folders
-                          .where(
-                            (target) =>
-                                target.id != folder.id &&
-                                target.id != folder.parentId &&
-                                !descendants.contains(target.id),
-                          )
-                          .map((target) {
-                            return RadioListTile<String?>(
-                              value: target.id,
-                              groupValue: tempParentId,
-                              title: Text(target.name),
-                              onChanged: (value) {
-                                setState(() {
-                                  tempParentId = value;
-                                });
-                              },
-                            );
-                          }),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context, false);
-                  },
-                  child: const Text('Cancel'),
-                ),
-
-                FilledButton(
-                  onPressed: () {
-                    Navigator.pop(context, tempParentId);
-                  },
-                  child: const Text('Move'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      folder: folder,
     );
-
-    if (!mounted) {
-      return;
-    }
 
     if (result == false) {
       return;
     }
 
-    selectedParentId = result as String?;
+    final parentId = result as String?;
 
-    await controller.moveFolder(
-      folderId: folder.id,
-      parentId: selectedParentId,
-    );
+    if (!mounted) {
+      return;
+    }
+
+    if (parentId == folder.parentId) {
+      return;
+    }
+
+    await controller.moveFolder(folderId: folder.id, parentId: parentId);
 
     await loadData();
   }

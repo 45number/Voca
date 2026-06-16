@@ -141,4 +141,8 @@ class FolderController {
   Future<List<String>> getDescendantFolderIds(String folderId) {
     return folderRepository.getDescendantFolderIds(folderId);
   }
+
+  Future<List<Folder>> getFolderPath(String folderId) {
+    return folderRepository.getFolderPath(folderId);
+  }
 }

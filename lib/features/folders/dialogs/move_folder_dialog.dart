@@ -8,11 +8,11 @@ class MoveFolderDialog extends StatefulWidget {
 
   const MoveFolderDialog({super.key, required this.folder});
 
-  static Future<String?> show({
+  static Future<Object?> show({
     required BuildContext context,
     required Folder folder,
   }) {
-    return showDialog<String?>(
+    return showDialog<Object?>(
       context: context,
       builder: (_) => MoveFolderDialog(folder: folder),
     );
@@ -26,6 +26,8 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
   final controller = FolderController();
 
   final expandedFolders = <String>{};
+
+  String? selectedParentId;
 
   List<Folder> folders = [];
 
@@ -43,6 +45,14 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
 
     descendants = await controller.getDescendantFolderIds(widget.folder.id);
 
+    selectedParentId = widget.folder.parentId;
+
+    final path = await controller.getFolderPath(widget.folder.id);
+
+    for (final folder in path) {
+      expandedFolders.add(folder.id);
+    }
+
     if (mounted) {
       setState(() {});
     }
@@ -59,9 +69,15 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
             ? const Center(child: CircularProgressIndicator())
             : ListView(
                 children: [
-                  const ListTile(
-                    leading: Icon(Icons.home_outlined),
-                    title: Text('Root'),
+                  ListTile(
+                    selected: selectedParentId == null,
+                    leading: const Icon(Icons.home_outlined),
+                    title: const Text('Root'),
+                    onTap: () {
+                      setState(() {
+                        selectedParentId = null;
+                      });
+                    },
                   ),
 
                   ...getChildFolders(
@@ -70,6 +86,23 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
                 ],
               ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () {
+            Navigator.pop(context, false);
+          },
+          child: const Text('Cancel'),
+        ),
+
+        FilledButton(
+          onPressed: selectedParentId == widget.folder.parentId
+              ? null
+              : () {
+                  Navigator.pop(context, selectedParentId);
+                },
+          child: const Text('Move'),
+        ),
+      ],
     );
   }
 
@@ -79,6 +112,7 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
           (folder) =>
               folder.parentId == parentId &&
               folder.id != widget.folder.id &&
+              // folder.id != widget.folder.parentId &&
               !descendants.contains(folder.id),
         )
         .toList();
@@ -92,9 +126,10 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
     return Column(
       children: [
         ListTile(
-          contentPadding: EdgeInsets.only(left: 16.0 + level * 24),
+          selected: selectedParentId == folder.id,
+          contentPadding: EdgeInsets.only(left: level * 20.0),
           leading: children.isEmpty
-              ? const SizedBox(width: 24)
+              ? const SizedBox(width: 40)
               : IconButton(
                   icon: Icon(
                     isExpanded ? Icons.expand_more : Icons.chevron_right,
@@ -110,6 +145,11 @@ class _MoveFolderDialogState extends State<MoveFolderDialog> {
                   },
                 ),
           title: Text(folder.name),
+          onTap: () {
+            setState(() {
+              selectedParentId = folder.id;
+            });
+          },
         ),
 
         if (isExpanded)
