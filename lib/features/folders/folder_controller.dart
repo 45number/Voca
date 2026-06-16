@@ -119,4 +119,18 @@ class FolderController {
 
     return wordRepository.getDifficultSpellingWords(folderIds);
   }
+
+  Future<String> buildDifficultBreadcrumb(Folder? folder) async {
+    if (folder == null) {
+      return 'All difficult words';
+    }
+
+    final folders = await folderRepository.getFolderPath(folder.id);
+
+    final parts = folders.map((f) => f.name).toList();
+
+    parts.add('Difficult');
+
+    return parts.join(' / ');
+  }
 }

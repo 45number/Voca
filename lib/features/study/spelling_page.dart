@@ -25,11 +25,14 @@ class SpellingPage extends StatefulWidget {
 
   final DeckInfo deck;
 
+  final String? customBreadcrumb;
+
   const SpellingPage({
     super.key,
     required this.words,
     required this.folder,
     required this.deck,
+    this.customBreadcrumb,
   });
 
   @override
@@ -54,6 +57,11 @@ class _SpellingPageState extends State<SpellingPage> {
   String breadcrumb = '';
 
   Future<void> loadBreadcrumb() async {
+    if (widget.customBreadcrumb != null) {
+      breadcrumb = widget.customBreadcrumb!;
+      return;
+    }
+
     final folders = await folderRepository.getFolderPath(widget.folder.id);
 
     final parts = folders.map((f) => f.name).toList();

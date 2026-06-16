@@ -396,62 +396,8 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
-    // if (mode == StudyMode.spelling) {
-    //   await Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (_) => SpellingPage(
-    //         words: words,
-    //         folder:
-    //             widget.folder ??
-    //             Folder(
-    //               id: 'difficult',
-    //               name: 'Difficult words',
-    //               parentId: null,
-    //               deleted: false,
-    //               updatedAt: 0,
-    //             ),
-    //         deck: const DeckInfo(index: 1, wordCount: 0),
-    //       ),
-    //     ),
-    //   );
+    final breadcrumb = await controller.buildDifficultBreadcrumb(widget.folder);
 
-    //   return;
-    // }
-
-    // await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) => FlashcardPage(words: words, mode: mode),
-    //   ),
-    // );
-
-    // if (mode == StudyMode.spelling) {
-    //   await Navigator.push(
-    //     context,
-    //     MaterialPageRoute(
-    //       builder: (_) =>
-    //           SpellingPage(words: words, folder: widget.folder!, deck: deck),
-    //     ),
-    //   );
-
-    //   if (!mounted) {
-    //     return;
-    //   }
-
-    //   await loadData();
-
-    //   return;
-    // }
-
-    // await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) => FlashcardPage(words: words, mode: mode),
-    //   ),
-    // );
-
-    ////////////////////////////
     if (mode == StudyMode.spelling) {
       await Navigator.push(
         context,
@@ -468,6 +414,7 @@ class _FolderPageState extends State<FolderPage> {
                   updatedAt: 0,
                 ),
             deck: const DeckInfo(index: 1, wordCount: 0),
+            customBreadcrumb: breadcrumb,
           ),
         ),
       );
@@ -493,7 +440,6 @@ class _FolderPageState extends State<FolderPage> {
     }
 
     await loadData();
-    ///////////////////////////
 
     if (!mounted) {
       return;
