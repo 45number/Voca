@@ -43,6 +43,17 @@ class FolderRepository {
     );
   }
 
+  Future<void> moveFolder({required String folderId, String? parentId}) async {
+    await (database.update(
+      database.folders,
+    )..where((f) => f.id.equals(folderId))).write(
+      FoldersCompanion(
+        parentId: Value(parentId),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
   Future<void> softDeleteFolder(String folderId) async {
     await (database.update(
       database.folders,
@@ -111,6 +122,30 @@ class FolderRepository {
       }
 
       return result;
+    }
+
+    await collect(folderId);
+
+    return result;
+  }
+
+  Future<List<Folder>> getAllFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.deleted.equals(false))).get();
+  }
+
+  Future<List<String>> getDescendantFolderIds(String folderId) async {
+    final result = <String>[];
+
+    Future<void> collect(String parentId) async {
+      final children = await getChildFolders(parentId);
+
+      for (final child in children) {
+        result.add(child.id);
+
+        await collect(child.id);
+      }
     }
 
     await collect(folderId);

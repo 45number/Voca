@@ -4,18 +4,6 @@ import '../../core/database/database_provider.dart';
 import '../decks/deck_builder.dart';
 import '../decks/deck_info.dart';
 
-// class FolderData {
-//   final List<Folder> childFolders;
-//   final List<DeckInfo> decks;
-//   final int wordCount;
-
-//   const FolderData({
-//     required this.childFolders,
-//     required this.decks,
-//     required this.wordCount,
-//   });
-// }
-
 class FolderData {
   final List<Folder> childFolders;
 
@@ -91,6 +79,10 @@ class FolderController {
     await folderRepository.renameFolder(folderId, name);
   }
 
+  Future<void> moveFolder({required String folderId, String? parentId}) async {
+    await folderRepository.moveFolder(folderId: folderId, parentId: parentId);
+  }
+
   Future<void> deleteFolder(String folderId) async {
     await folderRepository.softDeleteFolderTree(folderId);
   }
@@ -120,20 +112,6 @@ class FolderController {
     return wordRepository.getDifficultSpellingWords(folderIds);
   }
 
-  // Future<String> buildDifficultBreadcrumb(Folder? folder) async {
-  //   if (folder == null) {
-  //     return 'All difficult words';
-  //   }
-
-  //   final folders = await folderRepository.getFolderPath(folder.id);
-
-  //   final parts = folders.map((f) => f.name).toList();
-
-  //   parts.add('Difficult');
-
-  //   return parts.join(' / ');
-  // }
-
   Future<String> buildBreadcrumb({
     Folder? folder,
     DeckInfo? deck,
@@ -154,5 +132,13 @@ class FolderController {
     }
 
     return parts.join(' / ');
+  }
+
+  Future<List<Folder>> getAllFolders() {
+    return folderRepository.getAllFolders();
+  }
+
+  Future<List<String>> getDescendantFolderIds(String folderId) {
+    return folderRepository.getDescendantFolderIds(folderId);
   }
 }

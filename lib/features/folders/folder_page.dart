@@ -24,6 +24,7 @@ import 'widgets/deck_tile.dart';
 import 'widgets/empty_folder_view.dart';
 import 'widgets/folder_tile.dart';
 import '../study/spelling_page.dart';
+import 'dialogs/move_folder_dialog.dart';
 
 class FolderPage extends StatefulWidget {
   final Folder? folder;
@@ -140,6 +141,9 @@ class _FolderPageState extends State<FolderPage> {
                       },
                       onRename: () {
                         renameFolder(folder);
+                      },
+                      onMove: () {
+                        moveFolder(folder);
                       },
                       onDelete: () {
                         deleteFolder(folder);
@@ -265,6 +269,109 @@ class _FolderPageState extends State<FolderPage> {
     await loadData();
   }
 
+  Future<void> moveFolder(Folder folder) async {
+    await MoveFolderDialog.show(context: context, folder: folder);
+
+    return;
+
+    final folders = await controller.getAllFolders();
+
+    final descendants = await controller.getDescendantFolderIds(folder.id);
+
+    if (!mounted) {
+      return;
+    }
+
+    String? selectedParentId;
+
+    final result = await showDialog<Object?>(
+      context: context,
+      builder: (context) {
+        String? tempParentId = folder.parentId;
+
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Move "${folder.name}"'),
+              content: SizedBox(
+                width: 400,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      RadioListTile<String?>(
+                        value: null,
+                        groupValue: tempParentId,
+                        title: const Text('Root'),
+                        onChanged: (value) {
+                          setState(() {
+                            tempParentId = value;
+                          });
+                        },
+                      ),
+
+                      ...folders
+                          .where(
+                            (target) =>
+                                target.id != folder.id &&
+                                target.id != folder.parentId &&
+                                !descendants.contains(target.id),
+                          )
+                          .map((target) {
+                            return RadioListTile<String?>(
+                              value: target.id,
+                              groupValue: tempParentId,
+                              title: Text(target.name),
+                              onChanged: (value) {
+                                setState(() {
+                                  tempParentId = value;
+                                });
+                              },
+                            );
+                          }),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+
+                FilledButton(
+                  onPressed: () {
+                    Navigator.pop(context, tempParentId);
+                  },
+                  child: const Text('Move'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (result == false) {
+      return;
+    }
+
+    selectedParentId = result as String?;
+
+    await controller.moveFolder(
+      folderId: folder.id,
+      parentId: selectedParentId,
+    );
+
+    await loadData();
+  }
+
   Future<void> deleteFolder(Folder folder) async {
     final confirmed = await ConfirmDialog.show(
       context: context,
@@ -326,13 +433,6 @@ class _FolderPageState extends State<FolderPage> {
 
       return;
     }
-
-    // await Navigator.push(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (_) => FlashcardPage(words: words, mode: mode),
-    //   ),
-    // );
 
     await Navigator.push(
       context,
