@@ -16,7 +16,7 @@ import 'widgets/study_progress.dart';
 
 import '../decks/deck_info.dart';
 import 'widgets/study_breadcrumb_bar.dart';
-import '../../core/database/database_provider.dart';
+import '../folders/folder_controller.dart';
 
 class SpellingPage extends StatefulWidget {
   final List<Word> words;
@@ -62,13 +62,12 @@ class _SpellingPageState extends State<SpellingPage> {
       return;
     }
 
-    final folders = await folderRepository.getFolderPath(widget.folder.id);
+    final controller = FolderController();
 
-    final parts = folders.map((f) => f.name).toList();
-
-    parts.add('Deck ${widget.deck.index}');
-
-    breadcrumb = parts.join(' / ');
+    breadcrumb = await controller.buildBreadcrumb(
+      folder: widget.folder,
+      deck: widget.deck,
+    );
   }
 
   @override
@@ -160,19 +159,6 @@ class _SpellingPageState extends State<SpellingPage> {
     }
 
     return Scaffold(
-      // appBar: AppBar(
-      //   title: const Text('Spelling'),
-      //   actions: [
-      //     SpellingToolbar(
-      //       loopCards: loopCards,
-      //       randomOrder: randomOrder,
-      //       silentMode: silentMode,
-      //       onToggleLoop: toggleLoopCards,
-      //       onToggleRandom: toggleRandom,
-      //       onToggleSilent: toggleSilentMode,
-      //     ),
-      //   ],
-      // ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: AppPadding.screen,
@@ -259,13 +245,6 @@ class _SpellingPageState extends State<SpellingPage> {
                 ),
               const SizedBox(height: AppSpacing.spellingSectionSpacing),
 
-              // SpellingNavigationBar(
-              //   onPrevious: previousWord,
-              //   onNext: nextWord,
-              //   onPlayAudio: playAudio,
-              //   onToggleDifficult: toggleDifficultSpelling,
-              //   isDifficult: currentWord.difficultSpelling,
-              // ),
               SpellingNavigationBar(
                 onPrevious: previousWord,
                 onNext: nextWord,

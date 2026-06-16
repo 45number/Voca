@@ -13,16 +13,31 @@ import 'study_session_controller.dart';
 
 import 'widgets/flashcard_view.dart';
 import 'widgets/study_progress.dart';
-import 'widgets/study_toolbar.dart';
 import 'widgets/study_navigation_bar.dart';
 
-// import '../../core/ui/study_screen_mode.dart';
+import '../decks/deck_info.dart';
+import '../folders/folder_controller.dart';
+import 'widgets/study_breadcrumb_bar.dart';
 
 class FlashcardPage extends StatefulWidget {
   final List<Word> words;
+
   final StudyMode mode;
 
-  const FlashcardPage({super.key, required this.words, required this.mode});
+  final Folder? folder;
+
+  final DeckInfo? deck;
+
+  final String? customBreadcrumb;
+
+  const FlashcardPage({
+    super.key,
+    required this.words,
+    required this.mode,
+    this.folder,
+    this.deck,
+    this.customBreadcrumb,
+  });
 
   @override
   State<FlashcardPage> createState() => _FlashcardPageState();
@@ -37,11 +52,30 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
   FlashcardData? data;
 
+  String breadcrumb = '';
+
+  Future<void> loadBreadcrumb() async {
+    if (widget.customBreadcrumb != null) {
+      breadcrumb = widget.customBreadcrumb!;
+      return;
+    }
+
+    if (widget.folder == null || widget.deck == null) {
+      breadcrumb = 'Memorizing';
+      return;
+    }
+
+    final folderController = FolderController();
+
+    breadcrumb = await folderController.buildBreadcrumb(
+      folder: widget.folder,
+      deck: widget.deck,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
-
-    // StudyScreenMode.enter();
 
     loadData();
   }
@@ -54,6 +88,8 @@ class _FlashcardPageState extends State<FlashcardPage> {
   }
 
   Future<void> loadData() async {
+    await loadBreadcrumb();
+
     data = await controller.load(widget.words);
 
     await preloadCurrentAudio();
@@ -110,26 +146,17 @@ class _FlashcardPageState extends State<FlashcardPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Memorizing'),
-        actions: [
-          StudyToolbar(
-            loopCards: loopCards,
-            randomOrder: randomOrder,
-            silentMode: silentMode,
-            frontSide: frontSide,
-            onToggleLoop: toggleLoopCards,
-            onToggleRandom: toggleRandom,
-            onToggleSilent: toggleSilentMode,
-            onToggleFrontSide: toggleFrontSide,
-          ),
-        ],
-      ),
       body: SafeArea(
         child: Padding(
           padding: AppPadding.screen,
           child: Column(
             children: [
+              StudyBreadcrumbBar(
+                path: breadcrumb,
+                currentIndex: session.currentIndex,
+                totalCount: studyWords.length,
+              ),
+
               StudyProgress(
                 currentIndex: session.currentIndex,
                 totalCount: studyWords.length,
@@ -167,16 +194,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
     );
   }
 
-  // Future<void> playAudio() async {
-  //   final audioFile = currentWord.audioFile;
-
-  //   if (audioFile == null || audioFile.isEmpty) {
-  //     return;
-  //   }
-
-  //   await audioService.play(audioFile);
-  // }
-
   Future<void> playAudio() async {
     print('FLASHCARD playAudio()');
 
@@ -196,24 +213,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
     await preloadCurrentAudio();
   }
-
-  // Future<void> onCardTap() async {
-  //   if (!session.isRevealed) {
-  //     setState(() {
-  //       session.reveal();
-  //     });
-
-  //     if (!silentMode) {
-  //       WidgetsBinding.instance.addPostFrameCallback((_) {
-  //         playAudio();
-  //       });
-  //     }
-
-  //     return;
-  //   }
-
-  //   await nextCard();
-  // }
 
   Future<void> onCardTap() async {
     print('CARD TAP revealed=${session.isRevealed}');
@@ -235,8 +234,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
       return;
     }
 
-    print('NEXT CARD');
-
     await nextCard();
   }
 
@@ -245,8 +242,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
     if (hasNext) {
       setState(() {});
-
-      // await preloadCurrentAudio();
 
       return;
     }

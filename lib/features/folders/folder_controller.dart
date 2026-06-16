@@ -120,16 +120,38 @@ class FolderController {
     return wordRepository.getDifficultSpellingWords(folderIds);
   }
 
-  Future<String> buildDifficultBreadcrumb(Folder? folder) async {
+  // Future<String> buildDifficultBreadcrumb(Folder? folder) async {
+  //   if (folder == null) {
+  //     return 'All difficult words';
+  //   }
+
+  //   final folders = await folderRepository.getFolderPath(folder.id);
+
+  //   final parts = folders.map((f) => f.name).toList();
+
+  //   parts.add('Difficult');
+
+  //   return parts.join(' / ');
+  // }
+
+  Future<String> buildBreadcrumb({
+    Folder? folder,
+    DeckInfo? deck,
+    bool difficult = false,
+  }) async {
     if (folder == null) {
-      return 'All difficult words';
+      return difficult ? 'All difficult words' : 'Voca';
     }
 
     final folders = await folderRepository.getFolderPath(folder.id);
 
     final parts = folders.map((f) => f.name).toList();
 
-    parts.add('Difficult');
+    if (difficult) {
+      parts.add('Difficult');
+    } else if (deck != null) {
+      parts.add('Deck ${deck.index}');
+    }
 
     return parts.join(' / ');
   }

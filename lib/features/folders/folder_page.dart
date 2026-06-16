@@ -327,10 +327,22 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
+    // await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => FlashcardPage(words: words, mode: mode),
+    //   ),
+    // );
+
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FlashcardPage(words: words, mode: mode),
+        builder: (_) => FlashcardPage(
+          words: words,
+          mode: mode,
+          folder: widget.folder,
+          deck: deck,
+        ),
       ),
     );
 
@@ -396,7 +408,11 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
-    final breadcrumb = await controller.buildDifficultBreadcrumb(widget.folder);
+    // final breadcrumb = await controller.buildDifficultBreadcrumb(widget.folder);
+    final breadcrumb = await controller.buildBreadcrumb(
+      folder: widget.folder,
+      difficult: true,
+    );
 
     if (mode == StudyMode.spelling) {
       await Navigator.push(
@@ -431,7 +447,11 @@ class _FolderPageState extends State<FolderPage> {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FlashcardPage(words: words, mode: mode),
+        builder: (_) => FlashcardPage(
+          words: words,
+          mode: mode,
+          customBreadcrumb: breadcrumb,
+        ),
       ),
     );
 
