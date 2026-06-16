@@ -214,6 +214,15 @@ class _SpellingPageState extends State<SpellingPage> {
                 onSubmitted: (_) {
                   onEnterPressed();
                 },
+                onChanged: (_) {
+                  if (session.isChecked && !session.isCorrect) {
+                    textController.clear();
+
+                    session.resetAnswer();
+
+                    setState(() {});
+                  }
+                },
                 decoration: InputDecoration(
                   hintText: 'Type the word',
                   hintStyle: TextStyle(
