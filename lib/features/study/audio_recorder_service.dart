@@ -29,6 +29,10 @@ class AudioRecorderService {
     return _recorder.isRecording();
   }
 
+  Stream<Amplitude> onAmplitudeChanged() {
+    return _recorder.onAmplitudeChanged(const Duration(milliseconds: 100));
+  }
+
   Future<void> dispose() async {
     await _recorder.dispose();
   }

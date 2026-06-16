@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../core/database/database_provider.dart';
 import '../study/audio_recorder_service.dart';
 
+import 'dart:async';
+
 class SingleWordTab extends StatefulWidget {
   final String folderId;
 
@@ -18,7 +20,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   bool isRecording = false;
 
+  List<double> amplitudes = [];
+
   String? selectedAudioFile;
+
+  StreamSubscription? amplitudeSubscription;
 
   final recorder = AudioRecorderService();
 
@@ -30,6 +36,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
   void dispose() {
     wordController.dispose();
     translationController.dispose();
+
+    amplitudeSubscription?.cancel();
 
     recorder.dispose();
 
@@ -82,6 +90,36 @@ class _SingleWordTabState extends State<SingleWordTab> {
             label: const Text('Stop Recording'),
           ),
 
+        if (isRecording)
+          Container(
+            height: 80,
+            margin: const EdgeInsets.only(top: 12, bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              border: Border.all(color: Theme.of(context).colorScheme.outline),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: amplitudes.map((value) {
+                final normalized = ((value + 60) / 60).clamp(0.05, 1.0);
+
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 1),
+                    child: Container(
+                      height: normalized * 60,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+
         const SizedBox(height: 8),
 
         OutlinedButton.icon(
@@ -131,6 +169,22 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
     await recorder.startRecording();
 
+    amplitudeSubscription?.cancel();
+
+    amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        amplitudes.add(amplitude.current);
+
+        if (amplitudes.length > 40) {
+          amplitudes.removeAt(0);
+        }
+      });
+    });
+
     setState(() {
       isRecording = true;
     });
@@ -139,8 +193,14 @@ class _SingleWordTabState extends State<SingleWordTab> {
   Future<void> stopRecording() async {
     final path = await recorder.stopRecording();
 
+    await amplitudeSubscription?.cancel();
+
+    amplitudeSubscription = null;
+
     setState(() {
       isRecording = false;
+
+      amplitudes.clear();
 
       selectedAudioFile = path;
     });
