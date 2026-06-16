@@ -63,18 +63,6 @@ class _SpellingPageState extends State<SpellingPage> {
     breadcrumb = parts.join(' / ');
   }
 
-  // String get breadcrumb {
-  //   return '${widget.folder.name} / Deck ${widget.deck.index}';
-  // }
-
-  // String buildPathText(List<Folder> folders) {
-  //   final parts = folders.map((f) => f.name).toList();
-
-  //   parts.add('Deck ${widget.deck.index + 1}');
-
-  //   return parts.join(' / ');
-  // }
-
   @override
   void initState() {
     super.initState();

@@ -43,6 +43,12 @@ class _FolderPageState extends State<FolderPage> {
 
   List<DeckInfo> decks = [];
 
+  bool hasDifficultWords = false;
+
+  int difficultMemorizingCount = 0;
+
+  int difficultSpellingCount = 0;
+
   @override
   void initState() {
     super.initState();
@@ -58,6 +64,12 @@ class _FolderPageState extends State<FolderPage> {
     decks = data.decks;
 
     wordCount = data.wordCount;
+
+    hasDifficultWords = data.hasDifficultWords;
+
+    difficultMemorizingCount = data.difficultMemorizingCount;
+
+    difficultSpellingCount = data.difficultSpellingCount;
 
     if (mounted) {
       setState(() {});
@@ -78,19 +90,26 @@ class _FolderPageState extends State<FolderPage> {
       appBar: AppBar(
         title: Text(isRoot ? 'Voca' : widget.folder!.name),
         centerTitle: true,
-        actions: isRoot
-            ? [
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const SettingsPage()),
-                    );
-                  },
-                ),
-              ]
-            : null,
+        actions: [
+          if (hasDifficultWords)
+            IconButton(
+              icon: const Icon(Icons.star),
+              onPressed: () {
+                showDifficultWordsDialog();
+              },
+            ),
+
+          if (isRoot)
+            IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
+                );
+              },
+            ),
+        ],
       ),
       body: isEmpty
           ? EmptyFolderView(isRoot: isRoot)
@@ -290,14 +309,6 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
-    // if (mode == StudyMode.spelling) {
-    //   await Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (_) => SpellingPage(words: words)),
-    //   );
-
-    //   return;
-    // }
     if (mode == StudyMode.spelling) {
       await Navigator.push(
         context,
@@ -306,6 +317,12 @@ class _FolderPageState extends State<FolderPage> {
               SpellingPage(words: words, folder: widget.folder!, deck: deck),
         ),
       );
+
+      if (!mounted) {
+        return;
+      }
+
+      await loadData();
 
       return;
     }
@@ -316,5 +333,172 @@ class _FolderPageState extends State<FolderPage> {
         builder: (_) => FlashcardPage(words: words, mode: mode),
       ),
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    await loadData();
+  }
+
+  Future<void> showDifficultWordsDialog() async {
+    final items = <PopupMenuEntry<StudyMode>>[];
+
+    if (difficultMemorizingCount > 0) {
+      items.add(
+        PopupMenuItem(
+          value: StudyMode.memorizing,
+          child: Text('Memorizing ($difficultMemorizingCount)'),
+        ),
+      );
+    }
+
+    if (difficultSpellingCount > 0) {
+      items.add(
+        PopupMenuItem(
+          value: StudyMode.spelling,
+          child: Text('Spelling ($difficultSpellingCount)'),
+        ),
+      );
+    }
+
+    final mode = await showMenu<StudyMode>(
+      context: context,
+      position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
+      items: items,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (mode == null) {
+      return;
+    }
+
+    await openDifficultWords(mode);
+  }
+
+  Future<void> openDifficultWords(StudyMode mode) async {
+    List<Word> words;
+
+    if (mode == StudyMode.spelling) {
+      words = await controller.loadDifficultSpellingWords(widget.folder?.id);
+    } else {
+      words = await controller.loadDifficultMemorizingWords(widget.folder?.id);
+    }
+
+    if (words.isEmpty) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    // if (mode == StudyMode.spelling) {
+    //   await Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (_) => SpellingPage(
+    //         words: words,
+    //         folder:
+    //             widget.folder ??
+    //             Folder(
+    //               id: 'difficult',
+    //               name: 'Difficult words',
+    //               parentId: null,
+    //               deleted: false,
+    //               updatedAt: 0,
+    //             ),
+    //         deck: const DeckInfo(index: 1, wordCount: 0),
+    //       ),
+    //     ),
+    //   );
+
+    //   return;
+    // }
+
+    // await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => FlashcardPage(words: words, mode: mode),
+    //   ),
+    // );
+
+    // if (mode == StudyMode.spelling) {
+    //   await Navigator.push(
+    //     context,
+    //     MaterialPageRoute(
+    //       builder: (_) =>
+    //           SpellingPage(words: words, folder: widget.folder!, deck: deck),
+    //     ),
+    //   );
+
+    //   if (!mounted) {
+    //     return;
+    //   }
+
+    //   await loadData();
+
+    //   return;
+    // }
+
+    // await Navigator.push(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (_) => FlashcardPage(words: words, mode: mode),
+    //   ),
+    // );
+
+    ////////////////////////////
+    if (mode == StudyMode.spelling) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => SpellingPage(
+            words: words,
+            folder:
+                widget.folder ??
+                Folder(
+                  id: 'difficult',
+                  name: 'Difficult words',
+                  parentId: null,
+                  deleted: false,
+                  updatedAt: 0,
+                ),
+            deck: const DeckInfo(index: 1, wordCount: 0),
+          ),
+        ),
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      await loadData();
+
+      return;
+    }
+
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FlashcardPage(words: words, mode: mode),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    await loadData();
+    ///////////////////////////
+
+    if (!mounted) {
+      return;
+    }
+
+    await loadData();
   }
 }

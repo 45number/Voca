@@ -89,4 +89,32 @@ class FolderRepository {
 
     return result;
   }
+
+  Future<List<String>> getFolderTreeIds(String? folderId) async {
+    final result = <String>[];
+
+    Future<void> collect(String id) async {
+      result.add(id);
+
+      final children = await getChildFolders(id);
+
+      for (final child in children) {
+        await collect(child.id);
+      }
+    }
+
+    if (folderId == null) {
+      final roots = await getFolders();
+
+      for (final root in roots) {
+        await collect(root.id);
+      }
+
+      return result;
+    }
+
+    await collect(folderId);
+
+    return result;
+  }
 }

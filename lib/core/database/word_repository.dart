@@ -120,4 +120,66 @@ class WordRepository {
       ),
     );
   }
+
+  Future<int> getDifficultMemorizingCount(List<String> folderIds) async {
+    if (folderIds.isEmpty) {
+      return 0;
+    }
+
+    final words =
+        await (database.select(database.words)..where(
+              (w) =>
+                  w.folderId.isIn(folderIds) &
+                  w.deleted.equals(false) &
+                  w.difficultMemorizing.equals(true),
+            ))
+            .get();
+
+    return words.length;
+  }
+
+  Future<int> getDifficultSpellingCount(List<String> folderIds) async {
+    if (folderIds.isEmpty) {
+      return 0;
+    }
+
+    final words =
+        await (database.select(database.words)..where(
+              (w) =>
+                  w.folderId.isIn(folderIds) &
+                  w.deleted.equals(false) &
+                  w.difficultSpelling.equals(true),
+            ))
+            .get();
+
+    return words.length;
+  }
+
+  Future<List<Word>> getDifficultMemorizingWords(List<String> folderIds) {
+    if (folderIds.isEmpty) {
+      return Future.value([]);
+    }
+
+    return (database.select(database.words)..where(
+          (w) =>
+              w.folderId.isIn(folderIds) &
+              w.deleted.equals(false) &
+              w.difficultMemorizing.equals(true),
+        ))
+        .get();
+  }
+
+  Future<List<Word>> getDifficultSpellingWords(List<String> folderIds) {
+    if (folderIds.isEmpty) {
+      return Future.value([]);
+    }
+
+    return (database.select(database.words)..where(
+          (w) =>
+              w.folderId.isIn(folderIds) &
+              w.deleted.equals(false) &
+              w.difficultSpelling.equals(true),
+        ))
+        .get();
+  }
 }
