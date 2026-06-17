@@ -127,12 +127,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
                     debugPrint("index=$index");
 
-                    // setState(() {
-                    //   localTrimStart = index;
-                    // });
-                    // setState(() {
-                    //   localTrimStart = index;
-                    // });
                     setState(() {
                       if (index >= localTrimEnd) {
                         return;
@@ -142,12 +136,7 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                     });
                   },
 
-                  // onHorizontalDragEnd: (_) {
-                  //   widget.onTrimStartChanged?.call(localTrimStart);
-                  // },
                   onHorizontalDragEnd: (_) {
-                    // dragX = null;
-
                     widget.onTrimStartChanged?.call(localTrimStart);
                   },
                   child: Container(
@@ -203,12 +192,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                       widget.samples.length - 1,
                     );
 
-                    // setState(() {
-                    //   localTrimEnd = index;
-                    // });
-                    // setState(() {
-                    //   localTrimEnd = index;
-                    // });
                     setState(() {
                       if (index <= localTrimStart) {
                         return;
@@ -218,12 +201,7 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                     });
                   },
 
-                  // onHorizontalDragEnd: (_) {
-                  //   widget.onTrimEndChanged?.call(localTrimEnd);
-                  // },
                   onHorizontalDragEnd: (_) {
-                    // dragEndX = null;
-
                     widget.onTrimEndChanged?.call(localTrimEnd);
                   },
 
