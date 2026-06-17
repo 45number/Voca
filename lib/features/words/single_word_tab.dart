@@ -4,6 +4,12 @@ import 'package:flutter/material.dart';
 import '../../core/database/database_provider.dart';
 import '../study/audio_recorder_service.dart';
 
+// import '../../shared/audio/audio_preview_widget.dart';
+// import '../../../shared/audio/audio_service.dart';
+// import 'package:just_waveform/just_waveform.dart';
+
+import '../../shared/audio/waveform_widget.dart';
+
 import 'dart:async';
 
 class SingleWordTab extends StatefulWidget {
@@ -21,10 +27,18 @@ class _SingleWordTabState extends State<SingleWordTab> {
   bool isRecording = false;
 
   List<double> amplitudes = [];
+  List<double> recordedWaveform = [];
+
+  int trimStart = 0;
+  int trimEnd = 0;
 
   String? selectedAudioFile;
 
   StreamSubscription? amplitudeSubscription;
+
+  // Waveform? waveform;
+
+  // final audioService = AudioService();
 
   final recorder = AudioRecorderService();
 
@@ -136,6 +150,20 @@ class _SingleWordTabState extends State<SingleWordTab> {
               : selectedAudioFile!.split('\\').last,
         ),
 
+        /////////////////////////
+        const SizedBox(height: 12),
+
+        if (recordedWaveform.isNotEmpty)
+          WaveformWidget(samples: recordedWaveform),
+        ////////////////////////////
+        // const SizedBox(height: 12),
+
+        // if (selectedAudioFile == null) const Text('No audio selected'),
+
+        // if (selectedAudioFile != null)
+        //   AudioPreviewWidget(audioPath: selectedAudioFile!),
+
+        /////////////////////////////
         const SizedBox(height: 32),
 
         FilledButton(
@@ -167,11 +195,15 @@ class _SingleWordTabState extends State<SingleWordTab> {
       return;
     }
 
+    amplitudes.clear();
+
     await recorder.startRecording();
 
     amplitudeSubscription?.cancel();
 
     amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
+      debugPrint('Amplitude ${amplitude.current}');
+
       if (!mounted) {
         return;
       }
@@ -179,7 +211,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
       setState(() {
         amplitudes.add(amplitude.current);
 
-        if (amplitudes.length > 40) {
+        if (amplitudes.length > 100) {
           amplitudes.removeAt(0);
         }
       });
@@ -193,12 +225,49 @@ class _SingleWordTabState extends State<SingleWordTab> {
   Future<void> stopRecording() async {
     final path = await recorder.stopRecording();
 
+    if (path == null) {
+      return;
+    }
+
     await amplitudeSubscription?.cancel();
 
     amplitudeSubscription = null;
 
+    debugPrint('Collected ${amplitudes.length} samples');
+
+    debugPrint(amplitudes.toString());
+
     setState(() {
       isRecording = false;
+
+      recordedWaveform = amplitudes.map((v) {
+        return ((v + 60) / 60).clamp(0.05, 1.0);
+      }).toList();
+
+      const threshold = 0.08;
+
+      trimStart = 0;
+      trimEnd = recordedWaveform.length - 1;
+
+      for (int i = 0; i < recordedWaveform.length; i++) {
+        if (recordedWaveform[i] > threshold) {
+          trimStart = i;
+
+          break;
+        }
+      }
+
+      for (int i = recordedWaveform.length - 1; i >= 0; i--) {
+        if (recordedWaveform[i] > threshold) {
+          trimEnd = i;
+
+          break;
+        }
+      }
+
+      debugPrint('trimStart $trimStart');
+
+      debugPrint('trimEnd $trimEnd');
 
       amplitudes.clear();
 
