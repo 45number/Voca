@@ -55,193 +55,234 @@ class _WaveformWidgetState extends State<WaveformWidget> {
       return const SizedBox();
     }
 
-    return SizedBox(
-      height: 90,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
 
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
+      children: [
+        SizedBox(
+          height: 90,
 
-          final barWidth = width / widget.samples.length;
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
 
-          debugPrint("START=$localTrimStart END=$localTrimEnd");
+              final barWidth = width / widget.samples.length;
 
-          debugPrint("build left=${localTrimStart * barWidth}");
+              return Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.bottomCenter,
 
-          return Stack(
-            children: [
-              Align(
-                alignment: Alignment.bottomCenter,
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
 
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                      children: widget.samples.asMap().entries.map((entry) {
+                        final index = entry.key;
 
-                  children: widget.samples.asMap().entries.map((entry) {
-                    final index = entry.key;
+                        final value = entry.value;
 
-                    final value = entry.value;
+                        final insideTrim =
+                            index >= localTrimStart && index <= localTrimEnd;
 
-                    final insideTrim =
-                        index >= localTrimStart && index <= localTrimEnd;
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 1),
 
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 1),
+                            child: Container(
+                              height: value * 70,
 
-                        child: Container(
-                          height: value * 70,
+                              decoration: BoxDecoration(
+                                color: insideTrim
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.outline,
 
-                          decoration: BoxDecoration(
-                            color: insideTrim
-                                ? Theme.of(context).colorScheme.primary
-                                : Theme.of(context).colorScheme.outline,
-
-                            borderRadius: BorderRadius.circular(2),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
                           ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+
+                  /// Left mask
+                  Positioned(
+                    left: 0,
+
+                    top: 0,
+
+                    bottom: 0,
+
+                    width: localTrimStart * barWidth,
+
+                    child: IgnorePointer(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ),
+
+                  /// Right mask
+                  Positioned(
+                    right: 0,
+
+                    top: 0,
+
+                    bottom: 0,
+
+                    width:
+                        (widget.samples.length - 1 - localTrimEnd) * barWidth,
+
+                    child: IgnorePointer(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.25),
+                      ),
+                    ),
+                  ),
+
+                  /// START HANDLE
+                  Positioned(
+                    left: localTrimStart * barWidth - 9,
+
+                    top: 0,
+
+                    bottom: 0,
+
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+
+                      onHorizontalDragUpdate: (details) {
+                        dragX ??= localTrimStart * barWidth;
+
+                        dragX = dragX! + details.delta.dx;
+
+                        int index = (dragX! / barWidth).floor();
+
+                        index = index.clamp(0, localTrimEnd - 1);
+
+                        setState(() {
+                          localTrimStart = index;
+                        });
+                      },
+
+                      onHorizontalDragEnd: (_) {
+                        widget.onTrimStartChanged?.call(localTrimStart);
+                      },
+
+                      child: Container(
+                        width: 50,
+
+                        color: Colors.transparent,
+
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 18,
+
+                              height: 18,
+
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary,
+
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+
+                            Expanded(
+                              child: Center(
+                                child: Container(
+                                  width: 2,
+
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  }).toList(),
-                ),
-              ),
-              Positioned(
-                // left: (dragX ?? localTrimStart * barWidth) - 9,
-                left: localTrimStart * barWidth - 9,
-
-                top: 0,
-
-                bottom: 0,
-
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-
-                  onHorizontalDragUpdate: (details) {
-                    debugPrint("dx=${details.delta.dx}");
-                    debugPrint("start=$localTrimStart");
-                    dragX ??= localTrimStart * barWidth;
-
-                    dragX = dragX! + details.delta.dx;
-
-                    int index = (dragX! / barWidth).floor();
-
-                    debugPrint("dragX=$dragX index=$index");
-
-                    index = index.clamp(0, localTrimEnd - 1);
-
-                    debugPrint("index=$index");
-
-                    setState(() {
-                      if (index >= localTrimEnd) {
-                        return;
-                      }
-
-                      localTrimStart = index;
-                    });
-                  },
-
-                  onHorizontalDragEnd: (_) {
-                    widget.onTrimStartChanged?.call(localTrimStart);
-                  },
-                  child: Container(
-                    width: 50,
-
-                    color: Colors.transparent,
-
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 18,
-
-                          height: 18,
-
-                          decoration: const BoxDecoration(
-                            color: Colors.green,
-
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-
-                        Expanded(
-                          child: Center(
-                            child: Container(width: 2, color: Colors.green),
-                          ),
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ),
-              // пока ручки не переносим
-              Positioned(
-                // left: (dragEndX ?? localTrimEnd * barWidth) - 9,
-                left: localTrimEnd * barWidth - 9,
 
-                top: 0,
+                  /// END HANDLE
+                  Positioned(
+                    left: localTrimEnd * barWidth - 9,
 
-                bottom: 0,
+                    top: 0,
 
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
+                    bottom: 0,
 
-                  onHorizontalDragUpdate: (details) {
-                    dragEndX ??= localTrimEnd * barWidth;
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.translucent,
 
-                    dragEndX = dragEndX! + details.delta.dx;
+                      onHorizontalDragUpdate: (details) {
+                        dragEndX ??= localTrimEnd * barWidth;
 
-                    int index = (dragEndX! / barWidth).floor();
+                        dragEndX = dragEndX! + details.delta.dx;
 
-                    index = index.clamp(
-                      localTrimStart + 1,
+                        int index = (dragEndX! / barWidth).floor();
 
-                      widget.samples.length - 1,
-                    );
+                        index = index.clamp(
+                          localTrimStart + 1,
 
-                    setState(() {
-                      if (index <= localTrimStart) {
-                        return;
-                      }
+                          widget.samples.length - 1,
+                        );
 
-                      localTrimEnd = index;
-                    });
-                  },
+                        setState(() {
+                          localTrimEnd = index;
+                        });
+                      },
 
-                  onHorizontalDragEnd: (_) {
-                    widget.onTrimEndChanged?.call(localTrimEnd);
-                  },
+                      onHorizontalDragEnd: (_) {
+                        widget.onTrimEndChanged?.call(localTrimEnd);
+                      },
 
-                  child: Container(
-                    width: 50,
+                      child: Container(
+                        width: 50,
 
-                    color: Colors.transparent,
+                        color: Colors.transparent,
 
-                    child: Column(
-                      children: [
-                        Container(
-                          width: 18,
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 18,
 
-                          height: 18,
+                              height: 18,
 
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.tertiary,
 
-                            shape: BoxShape.circle,
-                          ),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+
+                            Expanded(
+                              child: Center(
+                                child: Container(
+                                  width: 2,
+
+                                  color: Theme.of(context).colorScheme.tertiary,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-
-                        Expanded(
-                          child: Center(
-                            child: Container(width: 2, color: Colors.red),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                ],
+              );
+            },
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        Text(
+          "$localTrimStart / $localTrimEnd",
+
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
     );
   }
 }
