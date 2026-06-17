@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../audio/waveform_controller.dart';
 
 class WaveformWidget extends StatefulWidget {
   final List<double> samples;
@@ -8,6 +9,7 @@ class WaveformWidget extends StatefulWidget {
   final ValueChanged<int>? onTrimStartChanged;
   final ValueChanged<int>? onTrimEndChanged;
   final VoidCallback? onPlay;
+  final WaveformController? controller;
 
   const WaveformWidget({
     super.key,
@@ -18,6 +20,7 @@ class WaveformWidget extends StatefulWidget {
     this.onTrimStartChanged,
     this.onTrimEndChanged,
     this.onPlay,
+    this.controller,
   });
 
   @override
@@ -30,6 +33,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
   int localTrimStart = 0;
   int localTrimEnd = 0;
 
+  double? localPlayhead;
+
   double? dragX;
   double? dragEndX;
 
@@ -37,8 +42,19 @@ class _WaveformWidgetState extends State<WaveformWidget> {
   void initState() {
     super.initState();
 
-    localTrimStart = widget.trimStart;
-    localTrimEnd = widget.trimEnd;
+    if (widget.controller != null) {
+      localTrimStart = widget.controller!.trimStart;
+
+      localTrimEnd = widget.controller!.trimEnd;
+    } else {
+      localTrimStart = widget.trimStart;
+
+      localTrimEnd = widget.trimEnd;
+    }
+
+    localPlayhead = widget.controller?.playhead ?? widget.playhead;
+
+    widget.controller?.addListener(_onControllerChanged);
   }
 
   @override
@@ -51,6 +67,25 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
       localTrimEnd = widget.trimEnd;
     }
+  }
+
+  void _onControllerChanged() {
+    if (!mounted) return;
+
+    setState(() {
+      localTrimStart = widget.controller?.trimStart ?? widget.trimStart;
+
+      localTrimEnd = widget.controller?.trimEnd ?? widget.trimEnd;
+
+      localPlayhead = widget.controller?.playhead ?? widget.playhead;
+    });
+  }
+
+  @override
+  void dispose() {
+    widget.controller?.removeListener(_onControllerChanged);
+
+    super.dispose();
   }
 
   @override
@@ -164,8 +199,13 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
                         index = index.clamp(0, localTrimEnd - 1);
 
+                        // setState(() {
+                        //   localTrimStart = index;
+                        // });
                         setState(() {
                           localTrimStart = index;
+
+                          widget.controller?.setTrimStart(localTrimStart);
                         });
                       },
 
@@ -231,8 +271,13 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                           widget.samples.length - 1,
                         );
 
+                        // setState(() {
+                        //   localTrimEnd = index;
+                        // });
                         setState(() {
                           localTrimEnd = index;
+
+                          widget.controller?.setTrimEnd(localTrimEnd);
                         });
                       },
 
@@ -273,9 +318,9 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                       ),
                     ),
                   ),
-                  if (widget.playhead != null)
+                  if (localPlayhead != null)
                     Positioned(
-                      left: widget.playhead! * barWidth,
+                      left: localPlayhead! * barWidth,
 
                       top: 0,
 
@@ -303,7 +348,11 @@ class _WaveformWidgetState extends State<WaveformWidget> {
         IconButton(
           onPressed: widget.onPlay,
 
-          icon: const Icon(Icons.play_arrow),
+          icon: Icon(
+            widget.controller?.isPlaying == true
+                ? Icons.pause
+                : Icons.play_arrow,
+          ),
         ),
       ],
     );

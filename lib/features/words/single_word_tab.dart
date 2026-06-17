@@ -2,6 +2,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/database/database_provider.dart';
+
 import '../study/audio_recorder_service.dart';
 
 import '../../shared/audio/audio_trim_service.dart';
@@ -9,6 +10,8 @@ import '../../shared/audio/audio_trim_service.dart';
 import '../../shared/audio/waveform_widget.dart';
 
 import '../../shared/audio/audio_player_service.dart';
+
+import '../../shared/audio/waveform_controller.dart';
 
 import 'dart:async';
 
@@ -29,8 +32,14 @@ class _SingleWordTabState extends State<SingleWordTab> {
   List<double> amplitudes = [];
   List<double> recordedWaveform = [];
 
-  int trimStart = 0;
-  int trimEnd = 0;
+  // int trimStart = 0;
+  // int trimEnd = 0;
+
+  // double? playhead;
+
+  final waveformController = WaveformController();
+
+  StreamSubscription<Duration>? playheadSubscription;
 
   String? selectedAudioFile;
 
@@ -160,27 +169,47 @@ class _SingleWordTabState extends State<SingleWordTab> {
           WaveformWidget(
             samples: recordedWaveform,
 
-            trimStart: trimStart,
+            controller: waveformController,
 
-            trimEnd: trimEnd,
+            trimStart: waveformController.trimStart,
 
-            playhead: ((trimStart + trimEnd) / 2),
+            trimEnd: waveformController.trimEnd,
 
+            // playhead:
+            //     (waveformController.trimStart + waveformController.trimEnd) / 2,
+            playhead: waveformController.playhead,
+
+            // onTrimStartChanged: (value) {
+            //   setState(() {
+            //     waveformController.trimStart = value;
+            //   });
+            // },
+            // onTrimEndChanged: (value) {
+            //   setState(() {
+            //     waveformController.trimEnd = value;
+            //   });
+            // },
             onTrimStartChanged: (value) {
-              setState(() {
-                trimStart = value;
-              });
+              waveformController.setTrimStart(value);
             },
 
             onTrimEndChanged: (value) {
-              setState(() {
-                trimEnd = value;
-              });
+              waveformController.setTrimEnd(value);
             },
 
             onPlay: playTrimmed,
           ),
 
+        ////////
+        // FilledButton(
+        //   onPressed: () {
+        //     waveformController.setTrimStart(5);
+        //   },
+
+        //   child: const Text("TEST"),
+        // ),
+
+        ////////
         const SizedBox(height: 32),
 
         FilledButton(
@@ -241,40 +270,31 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   Future<void> stopRecording() async {
     final path = await recorder.stopRecording();
-
     if (path == null) {
       return;
     }
-
     await amplitudeSubscription?.cancel();
-
     amplitudeSubscription = null;
-
-    // debugPrint('Collected ${amplitudes.length} samples');
-
-    // debugPrint(amplitudes.toString());
 
     final waveform = amplitudes.map((v) {
       return ((v + 60) / 60).clamp(0.05, 1.0);
     }).toList();
 
     final start = trimService.findSpeechStart(waveform);
-
     final end = trimService.findSpeechEnd(waveform);
-
-    // debugPrint('trimStart $start');
-
-    // debugPrint('trimEnd $end');
 
     setState(() {
       isRecording = false;
 
       recordedWaveform = waveform;
 
-      trimStart = start;
+      waveformController.setTrimStart(start);
 
-      trimEnd = end;
+      waveformController.setTrimEnd(end);
 
+      ////////////////
+      waveformController.setPlayhead(start.toDouble());
+      /////////////////
       amplitudes.clear();
 
       selectedAudioFile = path;
@@ -311,12 +331,58 @@ class _SingleWordTabState extends State<SingleWordTab> {
       return;
     }
 
+    if (playerService.isPlaying) {
+      await playerService.pause();
+
+      waveformController.setPlaying(false);
+
+      return;
+    }
+
+    if (playerService.pausedPosition != null) {
+      await playerService.resume();
+
+      waveformController.setPlaying(true);
+
+      return;
+    }
+
+    playheadSubscription?.cancel();
+
+    waveformController.setPlaying(true);
+
+    playheadSubscription = playerService.positionStream.listen((position) {
+      final trimEndPosition = waveformController.trimEnd.toDouble();
+
+      final duration = playerService.currentDuration;
+
+      if (duration == null) {
+        return;
+      }
+
+      if (duration.inMilliseconds == 0) {
+        return;
+      }
+
+      final progress = position.inMilliseconds / duration.inMilliseconds;
+
+      final sample = progress * recordedWaveform.length;
+
+      waveformController.setPlayhead(sample);
+
+      if (sample >= trimEndPosition) {
+        waveformController.resetPlayhead();
+
+        waveformController.setPlaying(false);
+      }
+    });
+
     await playerService.playSegment(
       path: selectedAudioFile!,
 
-      trimStart: trimStart,
+      trimStart: waveformController.trimStart,
 
-      trimEnd: trimEnd,
+      trimEnd: waveformController.trimEnd,
 
       sampleCount: recordedWaveform.length,
     );
