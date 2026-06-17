@@ -64,6 +64,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
           final barWidth = width / widget.samples.length;
 
+          debugPrint("START=$localTrimStart END=$localTrimEnd");
+
           debugPrint("build left=${localTrimStart * barWidth}");
 
           return Stack(
@@ -103,7 +105,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                 ),
               ),
               Positioned(
-                left: (dragX ?? localTrimStart * barWidth) - 9,
+                // left: (dragX ?? localTrimStart * barWidth) - 9,
+                left: localTrimStart * barWidth - 9,
 
                 top: 0,
 
@@ -170,7 +173,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
               ),
               // пока ручки не переносим
               Positioned(
-                left: (dragEndX ?? localTrimEnd * barWidth) - 9,
+                // left: (dragEndX ?? localTrimEnd * barWidth) - 9,
+                left: localTrimEnd * barWidth - 9,
 
                 top: 0,
 
