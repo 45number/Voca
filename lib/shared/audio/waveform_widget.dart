@@ -6,6 +6,7 @@ class WaveformWidget extends StatefulWidget {
   final int trimEnd;
   final ValueChanged<int>? onTrimStartChanged;
   final ValueChanged<int>? onTrimEndChanged;
+  final VoidCallback? onPlay;
 
   const WaveformWidget({
     super.key,
@@ -14,6 +15,7 @@ class WaveformWidget extends StatefulWidget {
     required this.trimEnd,
     this.onTrimStartChanged,
     this.onTrimEndChanged,
+    this.onPlay,
   });
 
   @override
@@ -281,6 +283,13 @@ class _WaveformWidgetState extends State<WaveformWidget> {
           "$localTrimStart / $localTrimEnd",
 
           style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+
+        IconButton(
+          onPressed: widget.onPlay,
+
+          icon: const Icon(Icons.play_arrow),
         ),
       ],
     );

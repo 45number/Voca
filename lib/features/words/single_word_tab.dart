@@ -8,6 +8,8 @@ import '../../shared/audio/audio_trim_service.dart';
 
 import '../../shared/audio/waveform_widget.dart';
 
+import '../../shared/audio/audio_player_service.dart';
+
 import 'dart:async';
 
 class SingleWordTab extends StatefulWidget {
@@ -45,6 +47,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
   final wordController = TextEditingController();
 
   final translationController = TextEditingController();
+
+  final playerService = AudioPlayerService();
 
   @override
   void dispose() {
@@ -171,6 +175,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
                 trimEnd = value;
               });
             },
+
+            onPlay: playTrimmed,
           ),
 
         const SizedBox(height: 32),
@@ -211,7 +217,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
     amplitudeSubscription?.cancel();
 
     amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
-      debugPrint('Amplitude ${amplitude.current}');
+      // debugPrint('Amplitude ${amplitude.current}');
 
       if (!mounted) {
         return;
@@ -242,9 +248,9 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
     amplitudeSubscription = null;
 
-    debugPrint('Collected ${amplitudes.length} samples');
+    // debugPrint('Collected ${amplitudes.length} samples');
 
-    debugPrint(amplitudes.toString());
+    // debugPrint(amplitudes.toString());
 
     final waveform = amplitudes.map((v) {
       return ((v + 60) / 60).clamp(0.05, 1.0);
@@ -254,9 +260,9 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
     final end = trimService.findSpeechEnd(waveform);
 
-    debugPrint('trimStart $start');
+    // debugPrint('trimStart $start');
 
-    debugPrint('trimEnd $end');
+    // debugPrint('trimEnd $end');
 
     setState(() {
       isRecording = false;
@@ -292,6 +298,26 @@ class _SingleWordTabState extends State<SingleWordTab> {
     setState(() {
       selectedAudioFile = path;
     });
+  }
+
+  Future<void> playTrimmed() async {
+    if (selectedAudioFile == null) {
+      return;
+    }
+
+    if (recordedWaveform.isEmpty) {
+      return;
+    }
+
+    await playerService.playSegment(
+      path: selectedAudioFile!,
+
+      trimStart: trimStart,
+
+      trimEnd: trimEnd,
+
+      sampleCount: recordedWaveform.length,
+    );
   }
 
   Future<void> save() async {
