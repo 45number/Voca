@@ -4,6 +4,7 @@ class WaveformWidget extends StatefulWidget {
   final List<double> samples;
   final int trimStart;
   final int trimEnd;
+  final double? playhead;
   final ValueChanged<int>? onTrimStartChanged;
   final ValueChanged<int>? onTrimEndChanged;
   final VoidCallback? onPlay;
@@ -13,6 +14,7 @@ class WaveformWidget extends StatefulWidget {
     required this.samples,
     required this.trimStart,
     required this.trimEnd,
+    this.playhead,
     this.onTrimStartChanged,
     this.onTrimEndChanged,
     this.onPlay,
@@ -271,6 +273,18 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                       ),
                     ),
                   ),
+                  if (widget.playhead != null)
+                    Positioned(
+                      left: widget.playhead! * barWidth,
+
+                      top: 0,
+
+                      bottom: 0,
+
+                      child: IgnorePointer(
+                        child: Container(width: 2, color: Colors.white),
+                      ),
+                    ),
                 ],
               );
             },

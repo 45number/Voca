@@ -164,6 +164,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
             trimEnd: trimEnd,
 
+            playhead: ((trimStart + trimEnd) / 2),
+
             onTrimStartChanged: (value) {
               setState(() {
                 trimStart = value;

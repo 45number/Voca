@@ -7,6 +7,10 @@ class AudioPlayerService {
 
   Timer? _timer;
 
+  Stream<Duration> get positionStream {
+    return _player.onPositionChanged;
+  }
+
   Future<void> playSegment({
     required String path,
 
@@ -17,8 +21,8 @@ class AudioPlayerService {
     required int sampleCount,
   }) async {
     // debugPrint("PLAY SEGMENT");
-    print("PLAY SEGMENT");
-    print(path);
+    // print("PLAY SEGMENT");
+    // print(path);
 
     await _player.stop();
 
