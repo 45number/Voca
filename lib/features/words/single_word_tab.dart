@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import '../../core/database/database_provider.dart';
 import '../study/audio_recorder_service.dart';
 
-// import '../../shared/audio/audio_preview_widget.dart';
-// import '../../../shared/audio/audio_service.dart';
-// import 'package:just_waveform/just_waveform.dart';
+import '../../shared/audio/audio_trim_service.dart';
 
 import '../../shared/audio/waveform_widget.dart';
 
@@ -41,6 +39,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
   // final audioService = AudioService();
 
   final recorder = AudioRecorderService();
+
+  final trimService = AudioTrimService();
 
   final wordController = TextEditingController();
 
@@ -150,20 +150,29 @@ class _SingleWordTabState extends State<SingleWordTab> {
               : selectedAudioFile!.split('\\').last,
         ),
 
-        /////////////////////////
         const SizedBox(height: 12),
 
         if (recordedWaveform.isNotEmpty)
-          WaveformWidget(samples: recordedWaveform),
-        ////////////////////////////
-        // const SizedBox(height: 12),
+          WaveformWidget(
+            samples: recordedWaveform,
 
-        // if (selectedAudioFile == null) const Text('No audio selected'),
+            trimStart: trimStart,
 
-        // if (selectedAudioFile != null)
-        //   AudioPreviewWidget(audioPath: selectedAudioFile!),
+            trimEnd: trimEnd,
 
-        /////////////////////////////
+            onTrimStartChanged: (value) {
+              setState(() {
+                trimStart = value;
+              });
+            },
+
+            onTrimEndChanged: (value) {
+              setState(() {
+                trimEnd = value;
+              });
+            },
+          ),
+
         const SizedBox(height: 32),
 
         FilledButton(
@@ -237,37 +246,26 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
     debugPrint(amplitudes.toString());
 
+    final waveform = amplitudes.map((v) {
+      return ((v + 60) / 60).clamp(0.05, 1.0);
+    }).toList();
+
+    final start = trimService.findSpeechStart(waveform);
+
+    final end = trimService.findSpeechEnd(waveform);
+
+    debugPrint('trimStart $start');
+
+    debugPrint('trimEnd $end');
+
     setState(() {
       isRecording = false;
 
-      recordedWaveform = amplitudes.map((v) {
-        return ((v + 60) / 60).clamp(0.05, 1.0);
-      }).toList();
+      recordedWaveform = waveform;
 
-      const threshold = 0.08;
+      trimStart = start;
 
-      trimStart = 0;
-      trimEnd = recordedWaveform.length - 1;
-
-      for (int i = 0; i < recordedWaveform.length; i++) {
-        if (recordedWaveform[i] > threshold) {
-          trimStart = i;
-
-          break;
-        }
-      }
-
-      for (int i = recordedWaveform.length - 1; i >= 0; i--) {
-        if (recordedWaveform[i] > threshold) {
-          trimEnd = i;
-
-          break;
-        }
-      }
-
-      debugPrint('trimStart $trimStart');
-
-      debugPrint('trimEnd $trimEnd');
+      trimEnd = end;
 
       amplitudes.clear();
 
