@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/database/database_provider.dart';
 import '../../shared/audio/audio_editor_controller.dart';
+import '../../shared/audio/passthrough_exporter.dart';
 import '../study/audio_recorder_service.dart';
 import '../../shared/audio/audio_trim_service.dart';
 import '../../shared/audio/audio_editor_widget.dart';
@@ -27,6 +28,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
   List<double> recordedWaveform = [];
 
   final editor = AudioEditorController();
+  final exporter = PassthroughExporter();
 
   String? selectedAudioFile;
 
@@ -220,6 +222,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
     final start = trimService.findSpeechStart(waveform);
     final end = trimService.findSpeechEnd(waveform);
+    final audioDuration =
+        await editor.player.getDuration(path) ?? Duration.zero;
 
     setState(() {
       isRecording = false;
@@ -235,6 +239,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
         samples: waveform,
         trimStart: start,
         trimEnd: end,
+        duration: audioDuration,
       );
     });
   }
@@ -272,6 +277,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
     setState(() {
       isSaving = true;
     });
+
+    // final trimmedFile = await editor.exportTrimmed();
+
+    // debugPrint("TRIMMED FILE");
+    // debugPrint(trimmedFile);
 
     await wordRepository.createWord(
       folderId: widget.folderId,

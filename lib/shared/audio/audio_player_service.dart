@@ -79,6 +79,12 @@ class AudioPlayerService {
     isPlaying = true;
   }
 
+  Future<Duration?> getDuration(String path) async {
+    await _player.setSource(DeviceFileSource(path));
+
+    return await _player.getDuration();
+  }
+
   Future<void> dispose() async {
     _timer?.cancel();
 
