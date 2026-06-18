@@ -2,16 +2,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/database/database_provider.dart';
-
+import '../../shared/audio/audio_editor_controller.dart';
 import '../study/audio_recorder_service.dart';
-
 import '../../shared/audio/audio_trim_service.dart';
-
 import '../../shared/audio/waveform_widget.dart';
 
-import '../../shared/audio/audio_player_service.dart';
-
-import '../../shared/audio/waveform_controller.dart';
+// import '../../shared/audio/audio_player_service.dart';
+// import '../../shared/audio/waveform_controller.dart';
 
 import 'dart:async';
 
@@ -37,9 +34,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   // double? playhead;
 
-  final waveformController = WaveformController();
+  // final waveformController = WaveformController();
 
-  StreamSubscription<Duration>? playheadSubscription;
+  final editor = AudioEditorController();
+
+  // StreamSubscription<Duration>? playheadSubscription;
 
   String? selectedAudioFile;
 
@@ -57,7 +56,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   final translationController = TextEditingController();
 
-  final playerService = AudioPlayerService();
+  // final playerService = AudioPlayerService();
 
   @override
   void dispose() {
@@ -166,38 +165,44 @@ class _SingleWordTabState extends State<SingleWordTab> {
         const SizedBox(height: 12),
 
         if (recordedWaveform.isNotEmpty)
+          // WaveformWidget(
+          //   samples: recordedWaveform,
+          //   // controller: waveformController,
+          //   controller: editor,
+          //   // trimStart: waveformController.trimStart,
+          //   // trimEnd: waveformController.trimEnd,
+          //   // playhead: waveformController.playhead,
+          //   // onTrimStartChanged: (value) {
+          //   //   setState(() {
+          //   //     waveformController.trimStart = value;
+          //   //   });
+          //   // },
+          //   // onTrimEndChanged: (value) {
+          //   //   setState(() {
+          //   //     waveformController.trimEnd = value;
+          //   //   });
+          //   // },
+          //   // onTrimStartChanged: (value) {
+          //   //   waveformController.setTrimStart(value);
+          //   // },
+          //   // onTrimEndChanged: (value) {
+          //   //   waveformController.setTrimEnd(value);
+          //   // },
+          //   // onPlay: playTrimmed,
+          //   onPlay: editor.play,
+          // ),
           WaveformWidget(
-            samples: recordedWaveform,
+            // samples: recordedWaveform,
+            controller: editor,
 
-            controller: waveformController,
+            // trimStart: editor.trimStart,
+            // trimEnd: editor.trimEnd,
+            // playhead: editor.playhead,
 
-            trimStart: waveformController.trimStart,
+            // onTrimStartChanged: editor.setTrimStart,
+            // onTrimEndChanged: editor.setTrimEnd,
 
-            trimEnd: waveformController.trimEnd,
-
-            // playhead:
-            //     (waveformController.trimStart + waveformController.trimEnd) / 2,
-            playhead: waveformController.playhead,
-
-            // onTrimStartChanged: (value) {
-            //   setState(() {
-            //     waveformController.trimStart = value;
-            //   });
-            // },
-            // onTrimEndChanged: (value) {
-            //   setState(() {
-            //     waveformController.trimEnd = value;
-            //   });
-            // },
-            onTrimStartChanged: (value) {
-              waveformController.setTrimStart(value);
-            },
-
-            onTrimEndChanged: (value) {
-              waveformController.setTrimEnd(value);
-            },
-
-            onPlay: playTrimmed,
+            // onPlay: editor.play,
           ),
 
         ////////
@@ -283,21 +288,47 @@ class _SingleWordTabState extends State<SingleWordTab> {
     final start = trimService.findSpeechStart(waveform);
     final end = trimService.findSpeechEnd(waveform);
 
+    // setState(() {
+    //   isRecording = false;
+
+    //   recordedWaveform = waveform;
+
+    //   waveformController.setTrimStart(start);
+
+    //   waveformController.setTrimEnd(end);
+
+    //   ////////////////
+    //   waveformController.setPlayhead(start.toDouble());
+    //   /////////////////
+    //   amplitudes.clear();
+
+    //   selectedAudioFile = path;
+
+    //   editor.load(
+    //     path: path,
+
+    //     samples: waveform,
+
+    //     trimStart: start,
+
+    //     trimEnd: end,
+    //   );
+    // });
     setState(() {
       isRecording = false;
 
       recordedWaveform = waveform;
 
-      waveformController.setTrimStart(start);
-
-      waveformController.setTrimEnd(end);
-
-      ////////////////
-      waveformController.setPlayhead(start.toDouble());
-      /////////////////
       amplitudes.clear();
 
       selectedAudioFile = path;
+
+      editor.load(
+        path: path,
+        samples: waveform,
+        trimStart: start,
+        trimEnd: end,
+      );
     });
   }
 
@@ -322,71 +353,71 @@ class _SingleWordTabState extends State<SingleWordTab> {
     });
   }
 
-  Future<void> playTrimmed() async {
-    if (selectedAudioFile == null) {
-      return;
-    }
+  // Future<void> playTrimmed() async {
+  //   if (selectedAudioFile == null) {
+  //     return;
+  //   }
 
-    if (recordedWaveform.isEmpty) {
-      return;
-    }
+  //   if (recordedWaveform.isEmpty) {
+  //     return;
+  //   }
 
-    if (playerService.isPlaying) {
-      await playerService.pause();
+  //   if (playerService.isPlaying) {
+  //     await playerService.pause();
 
-      waveformController.setPlaying(false);
+  //     waveformController.setPlaying(false);
 
-      return;
-    }
+  //     return;
+  //   }
 
-    if (playerService.pausedPosition != null) {
-      await playerService.resume();
+  //   if (playerService.pausedPosition != null) {
+  //     await playerService.resume();
 
-      waveformController.setPlaying(true);
+  //     waveformController.setPlaying(true);
 
-      return;
-    }
+  //     return;
+  //   }
 
-    playheadSubscription?.cancel();
+  //   playheadSubscription?.cancel();
 
-    waveformController.setPlaying(true);
+  //   waveformController.setPlaying(true);
 
-    playheadSubscription = playerService.positionStream.listen((position) {
-      final trimEndPosition = waveformController.trimEnd.toDouble();
+  //   playheadSubscription = playerService.positionStream.listen((position) {
+  //     final trimEndPosition = waveformController.trimEnd.toDouble();
 
-      final duration = playerService.currentDuration;
+  //     final duration = playerService.currentDuration;
 
-      if (duration == null) {
-        return;
-      }
+  //     if (duration == null) {
+  //       return;
+  //     }
 
-      if (duration.inMilliseconds == 0) {
-        return;
-      }
+  //     if (duration.inMilliseconds == 0) {
+  //       return;
+  //     }
 
-      final progress = position.inMilliseconds / duration.inMilliseconds;
+  //     final progress = position.inMilliseconds / duration.inMilliseconds;
 
-      final sample = progress * recordedWaveform.length;
+  //     final sample = progress * recordedWaveform.length;
 
-      waveformController.setPlayhead(sample);
+  //     waveformController.setPlayhead(sample);
 
-      if (sample >= trimEndPosition) {
-        waveformController.resetPlayhead();
+  //     if (sample >= trimEndPosition) {
+  //       waveformController.resetPlayhead();
 
-        waveformController.setPlaying(false);
-      }
-    });
+  //       waveformController.setPlaying(false);
+  //     }
+  //   });
 
-    await playerService.playSegment(
-      path: selectedAudioFile!,
+  //   await playerService.playSegment(
+  //     path: selectedAudioFile!,
 
-      trimStart: waveformController.trimStart,
+  //     trimStart: waveformController.trimStart,
 
-      trimEnd: waveformController.trimEnd,
+  //     trimEnd: waveformController.trimEnd,
 
-      sampleCount: recordedWaveform.length,
-    );
-  }
+  //     sampleCount: recordedWaveform.length,
+  //   );
+  // }
 
   Future<void> save() async {
     final word = wordController.text.trim();

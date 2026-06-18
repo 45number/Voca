@@ -1,26 +1,28 @@
 import 'package:flutter/material.dart';
-import '../audio/waveform_controller.dart';
+// import '../audio/waveform_controller.dart';
+import '../audio/audio_editor_controller.dart';
 
 class WaveformWidget extends StatefulWidget {
-  final List<double> samples;
-  final int trimStart;
-  final int trimEnd;
-  final double? playhead;
-  final ValueChanged<int>? onTrimStartChanged;
-  final ValueChanged<int>? onTrimEndChanged;
-  final VoidCallback? onPlay;
-  final WaveformController? controller;
+  // final List<double> samples;
+  // final int trimStart;
+  // final int trimEnd;
+  // final double? playhead;
+  // final ValueChanged<int>? onTrimStartChanged;
+  // final ValueChanged<int>? onTrimEndChanged;
+  // final VoidCallback? onPlay;
+  // final WaveformController? controller;
+  final AudioEditorController controller;
 
   const WaveformWidget({
     super.key,
-    required this.samples,
-    required this.trimStart,
-    required this.trimEnd,
-    this.playhead,
-    this.onTrimStartChanged,
-    this.onTrimEndChanged,
-    this.onPlay,
-    this.controller,
+    // required this.samples,
+    // required this.trimStart,
+    // required this.trimEnd,
+    // this.playhead,
+    // this.onTrimStartChanged,
+    // this.onTrimEndChanged,
+    // this.onPlay,
+    required this.controller,
   });
 
   @override
@@ -42,55 +44,72 @@ class _WaveformWidgetState extends State<WaveformWidget> {
   void initState() {
     super.initState();
 
-    if (widget.controller != null) {
-      localTrimStart = widget.controller!.trimStart;
+    // if (widget.controller != null) {
+    //   localTrimStart = widget.controller!.trimStart;
 
-      localTrimEnd = widget.controller!.trimEnd;
-    } else {
-      localTrimStart = widget.trimStart;
+    //   localTrimEnd = widget.controller!.trimEnd;
+    // } else {
+    //   localTrimStart = widget.trimStart;
 
-      localTrimEnd = widget.trimEnd;
-    }
+    //   localTrimEnd = widget.trimEnd;
+    // }
 
-    localPlayhead = widget.controller?.playhead ?? widget.playhead;
+    localTrimStart = widget.controller.trimStart;
 
-    widget.controller?.addListener(_onControllerChanged);
+    localTrimEnd = widget.controller.trimEnd;
+
+    // localPlayhead = widget.controller?.playhead ?? widget.playhead;
+    localPlayhead = widget.controller.playhead;
+
+    widget.controller.addListener(_onControllerChanged);
   }
+
+  // @override
+  // void didUpdateWidget(covariant WaveformWidget oldWidget) {
+  //   super.didUpdateWidget(oldWidget);
+
+  //   if (oldWidget.trimStart != widget.trimStart ||
+  //       oldWidget.trimEnd != widget.trimEnd) {
+  //     localTrimStart = widget.trimStart;
+
+  //     localTrimEnd = widget.trimEnd;
+  //   }
+  // }
 
   @override
   void didUpdateWidget(covariant WaveformWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.trimStart != widget.trimStart ||
-        oldWidget.trimEnd != widget.trimEnd) {
-      localTrimStart = widget.trimStart;
-
-      localTrimEnd = widget.trimEnd;
-    }
   }
 
   void _onControllerChanged() {
     if (!mounted) return;
 
     setState(() {
-      localTrimStart = widget.controller?.trimStart ?? widget.trimStart;
+      // localTrimStart = widget.controller?.trimStart ?? widget.trimStart;
 
-      localTrimEnd = widget.controller?.trimEnd ?? widget.trimEnd;
+      // localTrimEnd = widget.controller?.trimEnd ?? widget.trimEnd;
+      localTrimStart = widget.controller.trimStart;
+      localTrimEnd = widget.controller.trimEnd;
 
-      localPlayhead = widget.controller?.playhead ?? widget.playhead;
+      // localPlayhead = widget.controller.playhead ?? widget.playhead;
+      localPlayhead = widget.controller.playhead;
     });
   }
 
   @override
   void dispose() {
-    widget.controller?.removeListener(_onControllerChanged);
+    widget.controller.removeListener(_onControllerChanged);
 
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.samples.isEmpty) {
+    // if (widget.samples.isEmpty) {
+    //   return const SizedBox();
+    // }
+
+    if (widget.controller.samples.isEmpty) {
       return const SizedBox();
     }
 
@@ -105,7 +124,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
             builder: (context, constraints) {
               final width = constraints.maxWidth;
 
-              final barWidth = width / widget.samples.length;
+              // final barWidth = width / widget.samples.length;
+              final barWidth = width / widget.controller.samples.length;
 
               return Stack(
                 children: [
@@ -115,7 +135,9 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
 
-                      children: widget.samples.asMap().entries.map((entry) {
+                      children: widget.controller.samples.asMap().entries.map((
+                        entry,
+                      ) {
                         final index = entry.key;
 
                         final value = entry.value;
@@ -170,7 +192,9 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                     bottom: 0,
 
                     width:
-                        (widget.samples.length - 1 - localTrimEnd) * barWidth,
+                        // (widget.samples.length - 1 - localTrimEnd) * barWidth,
+                        (widget.controller.samples.length - 1 - localTrimEnd) *
+                        barWidth,
 
                     child: IgnorePointer(
                       child: Container(
@@ -205,14 +229,13 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                         setState(() {
                           localTrimStart = index;
 
-                          widget.controller?.setTrimStart(localTrimStart);
+                          widget.controller.setTrimStart(localTrimStart);
                         });
                       },
 
-                      onHorizontalDragEnd: (_) {
-                        widget.onTrimStartChanged?.call(localTrimStart);
-                      },
-
+                      // onHorizontalDragEnd: (_) {
+                      //   widget.onTrimStartChanged?.call(localTrimStart);
+                      // },
                       child: Container(
                         width: 50,
 
@@ -268,7 +291,8 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                         index = index.clamp(
                           localTrimStart + 1,
 
-                          widget.samples.length - 1,
+                          // widget.samples.length - 1,
+                          widget.controller.samples.length - 1,
                         );
 
                         // setState(() {
@@ -277,14 +301,13 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                         setState(() {
                           localTrimEnd = index;
 
-                          widget.controller?.setTrimEnd(localTrimEnd);
+                          widget.controller.setTrimEnd(localTrimEnd);
                         });
                       },
 
-                      onHorizontalDragEnd: (_) {
-                        widget.onTrimEndChanged?.call(localTrimEnd);
-                      },
-
+                      // onHorizontalDragEnd: (_) {
+                      //   widget.onTrimEndChanged?.call(localTrimEnd);
+                      // },
                       child: Container(
                         width: 50,
 
@@ -346,12 +369,11 @@ class _WaveformWidgetState extends State<WaveformWidget> {
         const SizedBox(height: 8),
 
         IconButton(
-          onPressed: widget.onPlay,
+          // onPressed: widget.onPlay,
+          onPressed: widget.controller.toggle,
 
           icon: Icon(
-            widget.controller?.isPlaying == true
-                ? Icons.pause
-                : Icons.play_arrow,
+            widget.controller.isPlaying ? Icons.pause : Icons.play_arrow,
           ),
         ),
       ],
