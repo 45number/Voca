@@ -14,7 +14,7 @@ import 'study_session_controller.dart';
 
 import 'widgets/flashcard_view.dart';
 import 'widgets/study_progress.dart';
-// import 'widgets/spelling_navigation_bar.dart';
+
 import 'widgets/study_navigation_bar.dart';
 
 import '../decks/deck_info.dart';
@@ -50,7 +50,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
   final session = StudySessionController();
 
-  // final audioService = AudioService();
   final audioService = AudioPlayerService();
 
   FlashcardData? data;

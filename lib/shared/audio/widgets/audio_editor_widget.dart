@@ -293,11 +293,21 @@ class _AudioEditorWidgetState extends State<AudioEditorWidget> {
 
         const SizedBox(height: 8),
 
-        Text(
-          "$localTrimStart / $localTrimEnd",
+        // Text(
+        //   "$localTrimStart / $localTrimEnd",
 
-          style: Theme.of(context).textTheme.bodySmall,
+        //   style: Theme.of(context).textTheme.bodySmall,
+        // ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+          children: [
+            Text(widget.controller.formatPosition(localTrimStart)),
+
+            Text(widget.controller.formatPosition(localTrimEnd)),
+          ],
         ),
+
         const SizedBox(height: 8),
 
         IconButton(

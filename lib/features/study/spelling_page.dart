@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/theme/theme.dart';
 
-// import '../../shared/audio/services/audio_service.dart';
 import '../../shared/audio/services/audio_player_service.dart';
 import 'spelling_checker.dart';
 import 'spelling_controller.dart';
@@ -11,7 +10,6 @@ import 'spelling_data.dart';
 import 'spelling_session_controller.dart';
 import 'study_complete_dialog.dart';
 
-// import 'widgets/spelling_navigation_bar.dart';
 import 'widgets/study_navigation_bar.dart';
 import 'widgets/spelling_result_view.dart';
 import 'widgets/study_progress.dart';
@@ -48,7 +46,6 @@ class _SpellingPageState extends State<SpellingPage> {
 
   final checker = SpellingChecker();
 
-  // final audioService = AudioService();
   final audioService = AudioPlayerService();
 
   final textController = TextEditingController();

@@ -1,19 +1,30 @@
 import 'dart:async';
 
+import '../services/audio_recorder_service.dart';
+import '../services/audio_trim_service.dart';
+
 import 'package:flutter/foundation.dart';
 
 import '../services/audio_player_service.dart';
 
-// import 'audio_trim_service.dart';
+import 'package:file_picker/file_picker.dart';
+
+import '../services/waveform_extractor_service.dart';
 
 import '../models/audio_edit_result.dart';
 
 class AudioEditorController extends ChangeNotifier {
   final player = AudioPlayerService();
 
-  // final trimService = AudioTrimService();
+  final recorder = AudioRecorderService();
+
+  final trimService = AudioTrimService();
+
+  final waveformExtractor = WaveformExtractorService();
 
   StreamSubscription<Duration>? playheadSubscription;
+
+  StreamSubscription? amplitudeSubscription;
 
   List<double> samples = [];
 
@@ -29,7 +40,13 @@ class AudioEditorController extends ChangeNotifier {
 
   bool isPlaying = false;
 
-  // StreamSubscription<Duration>? subscription;
+  bool isRecording = false;
+
+  String? selectedAudioFile;
+
+  List<double> waveform = [];
+
+  List<double> liveWaveform = [];
 
   void load({
     required String path,
@@ -181,39 +198,6 @@ class AudioEditorController extends ChangeNotifier {
     );
   }
 
-  // @Deprecated('Use AudioExporter')
-  // Future<String?> exportTrimmed() async {
-  //   if (path == null) {
-  //     return null;
-  //   }
-
-  //   if (samples.isEmpty) {
-  //     return null;
-  //   }
-
-  //   final duration = await player.getDuration(path!);
-
-  //   if (duration == null) {
-  //     return null;
-  //   }
-
-  //   final startSeconds =
-  //       duration.inMilliseconds * trimStart / samples.length / 1000;
-
-  //   final endSeconds =
-  //       duration.inMilliseconds * trimEnd / samples.length / 1000;
-
-  //   final durationSeconds = endSeconds - startSeconds;
-
-  //   return await trimService.trimFile(
-  //     path: path!,
-
-  //     startSeconds: startSeconds,
-
-  //     durationSeconds: durationSeconds,
-  //   );
-  // }
-
   @override
   void dispose() {
     playheadSubscription?.cancel();
@@ -247,5 +231,160 @@ class AudioEditorController extends ChangeNotifier {
 
   Duration get selectionDuration {
     return trimEndTime - trimStartTime;
+  }
+
+  Future<bool> startRecording() async {
+    final hasPermission = await recorder.hasPermission();
+
+    if (!hasPermission) {
+      return false;
+    }
+
+    liveWaveform.clear();
+
+    await recorder.startRecording();
+
+    amplitudeSubscription?.cancel();
+
+    amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
+      liveWaveform.add(amplitude.current);
+
+      if (liveWaveform.length > 100) {
+        liveWaveform.removeAt(0);
+      }
+
+      notifyListeners();
+    });
+
+    isRecording = true;
+
+    notifyListeners();
+
+    return true;
+  }
+
+  Future<bool> stopRecording() async {
+    final path = await recorder.stopRecording();
+
+    if (path == null) {
+      return false;
+    }
+
+    await amplitudeSubscription?.cancel();
+    amplitudeSubscription = null;
+
+    final normalizedWaveform = liveWaveform.map((v) {
+      return ((v + 60) / 60).clamp(0.05, 1.0);
+    }).toList();
+
+    final start = trimService.findSpeechStart(normalizedWaveform);
+
+    final end = trimService.findSpeechEnd(normalizedWaveform);
+
+    final audioDuration = await player.getDuration(path) ?? Duration.zero;
+
+    isRecording = false;
+
+    selectedAudioFile = path;
+
+    waveform = normalizedWaveform;
+
+    liveWaveform.clear();
+
+    load(
+      path: path,
+      samples: waveform,
+      trimStart: start,
+      trimEnd: end,
+      duration: audioDuration,
+    );
+
+    notifyListeners();
+
+    return true;
+  }
+
+  Future<bool> pickAudioFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+    );
+
+    if (result == null) {
+      return false;
+    }
+
+    final path = result.files.single.path;
+
+    if (path == null) {
+      return false;
+    }
+
+    selectedAudioFile = path;
+
+    notifyListeners();
+
+    return true;
+  }
+
+  Future<bool> importAudioFile() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+    );
+
+    if (result == null) {
+      return false;
+    }
+
+    final path = result.files.single.path;
+
+    if (path == null) {
+      return false;
+    }
+
+    await loadFile(path);
+
+    return true;
+  }
+
+  Future<void> loadFile(String path) async {
+    final waveform = await waveformExtractor.extract(path);
+
+    final start = trimService.findSpeechStart(waveform);
+
+    final end = trimService.findSpeechEnd(waveform);
+
+    final audioDuration = await player.getDuration(path) ?? Duration.zero;
+
+    selectedAudioFile = path;
+
+    load(
+      path: path,
+      samples: waveform,
+      trimStart: start,
+      trimEnd: end,
+      duration: audioDuration,
+    );
+
+    notifyListeners();
+  }
+
+  String formatPosition(int sampleIndex) {
+    if (samples.isEmpty) return "00:00";
+
+    final ratio = sampleIndex / samples.length;
+
+    final ms = duration.inMilliseconds * ratio;
+
+    final d = Duration(milliseconds: ms.toInt());
+
+    final minutes = d.inMinutes.toString().padLeft(2, '0');
+
+    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
+
+    final millis = (d.inMilliseconds % 1000).toString().padLeft(3, '0');
+
+    return "$minutes:$seconds.$millis";
   }
 }

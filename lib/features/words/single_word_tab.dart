@@ -1,14 +1,10 @@
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/database/database_provider.dart';
 import '../../shared/audio/controllers/audio_editor_controller.dart';
 import '../../shared/audio/exporters/passthrough_exporter.dart';
-import '../../shared/audio/services/audio_recorder_service.dart';
-import '../../shared/audio/services/audio_trim_service.dart';
 import '../../shared/audio/widgets/audio_editor_widget.dart';
-
-import 'dart:async';
+import '../../shared/audio/widgets/audio_input_widget.dart';
 
 class SingleWordTab extends StatefulWidget {
   final String folderId;
@@ -22,21 +18,8 @@ class SingleWordTab extends StatefulWidget {
 class _SingleWordTabState extends State<SingleWordTab> {
   bool isSaving = false;
 
-  bool isRecording = false;
-
-  List<double> amplitudes = [];
-  List<double> recordedWaveform = [];
-
   final editor = AudioEditorController();
   final exporter = PassthroughExporter();
-
-  String? selectedAudioFile;
-
-  StreamSubscription? amplitudeSubscription;
-
-  final recorder = AudioRecorderService();
-
-  final trimService = AudioTrimService();
 
   final wordController = TextEditingController();
 
@@ -46,10 +29,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
   void dispose() {
     wordController.dispose();
     translationController.dispose();
-
-    amplitudeSubscription?.cancel();
-
-    recorder.dispose();
 
     editor.dispose();
 
@@ -87,70 +66,110 @@ class _SingleWordTabState extends State<SingleWordTab> {
         ),
 
         const SizedBox(height: 12),
+        ///////////////////////////////////
+        const Text(
+          'AudioInputWidget Start',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        AudioInputWidget(controller: editor),
+        const Text(
+          'AudioInputWidget End',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
 
-        if (!isRecording)
-          OutlinedButton.icon(
-            onPressed: startRecording,
-            icon: const Icon(Icons.mic),
-            label: const Text('Start Recording'),
-          ),
+        const SizedBox(height: 24),
 
-        if (isRecording)
-          FilledButton.icon(
-            onPressed: stopRecording,
-            icon: const Icon(Icons.stop),
-            label: const Text('Stop Recording'),
-          ),
+        /////////////////////////////
+        // AnimatedBuilder(
+        //   animation: editor,
+        //   builder: (_, __) {
+        //     if (editor.isRecording) {
+        //       return FilledButton.icon(
+        //         onPressed: stopRecording,
+        //         icon: const Icon(Icons.stop),
+        //         label: const Text('Stop Recording'),
+        //       );
+        //     }
 
-        if (isRecording)
-          Container(
-            height: 80,
-            margin: const EdgeInsets.only(top: 12, bottom: 12),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(context).colorScheme.outline),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: amplitudes.map((value) {
-                final normalized = ((value + 60) / 60).clamp(0.05, 1.0);
+        //     return OutlinedButton.icon(
+        //       onPressed: startRecording,
+        //       icon: const Icon(Icons.mic),
+        //       label: const Text('Start Recording'),
+        //     );
+        //   },
+        // ),
 
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 1),
-                    child: Container(
-                      height: normalized * 60,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
+        // AnimatedBuilder(
+        //   animation: editor,
+        //   builder: (_, __) {
+        //     if (!editor.isRecording) {
+        //       return const SizedBox();
+        //     }
 
-        const SizedBox(height: 8),
+        //     return Container(
+        //       height: 80,
+        //       margin: const EdgeInsets.only(top: 12, bottom: 12),
+        //       padding: const EdgeInsets.symmetric(horizontal: 8),
+        //       decoration: BoxDecoration(
+        //         border: Border.all(
+        //           color: Theme.of(context).colorScheme.outline,
+        //         ),
+        //         borderRadius: BorderRadius.circular(12),
+        //       ),
+        //       child: Row(
+        //         crossAxisAlignment: CrossAxisAlignment.end,
+        //         children: editor.liveWaveform.map((value) {
+        //           final normalized = ((value + 60) / 60).clamp(0.05, 1.0);
 
-        OutlinedButton.icon(
-          onPressed: pickAudioFile,
-          icon: const Icon(Icons.attach_file),
-          label: const Text('Attach Audio File'),
+        //           return Expanded(
+        //             child: Padding(
+        //               padding: const EdgeInsets.symmetric(horizontal: 1),
+        //               child: Container(
+        //                 height: normalized * 60,
+        //                 decoration: BoxDecoration(
+        //                   color: Theme.of(context).colorScheme.primary,
+        //                   borderRadius: BorderRadius.circular(2),
+        //                 ),
+        //               ),
+        //             ),
+        //           );
+        //         }).toList(),
+        //       ),
+        //     );
+        //   },
+        // ),
+        // const SizedBox(height: 8),
+
+        // OutlinedButton.icon(
+        //   onPressed: pickAudioFile,
+        //   icon: const Icon(Icons.attach_file),
+        //   label: const Text('Attach Audio File'),
+        // ),
+        const SizedBox(height: 12),
+
+        AnimatedBuilder(
+          animation: editor,
+          builder: (_, __) {
+            return Text(
+              editor.selectedAudioFile == null
+                  ? 'No audio selected'
+                  : editor.selectedAudioFile!.split('\\').last,
+            );
+          },
         ),
 
         const SizedBox(height: 12),
 
-        Text(
-          selectedAudioFile == null
-              ? 'No audio selected'
-              : selectedAudioFile!.split('\\').last,
+        AnimatedBuilder(
+          animation: editor,
+          builder: (_, __) {
+            if (editor.waveform.isEmpty) {
+              return const SizedBox();
+            }
+
+            return AudioEditorWidget(controller: editor);
+          },
         ),
-
-        const SizedBox(height: 12),
-
-        if (recordedWaveform.isNotEmpty) AudioEditorWidget(controller: editor),
 
         const SizedBox(height: 32),
 
@@ -169,9 +188,9 @@ class _SingleWordTabState extends State<SingleWordTab> {
   }
 
   Future<void> startRecording() async {
-    final hasPermission = await recorder.hasPermission();
+    final success = await editor.startRecording();
 
-    if (!hasPermission) {
+    if (!success) {
       if (!mounted) {
         return;
       }
@@ -182,87 +201,18 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
       return;
     }
-
-    amplitudes.clear();
-
-    await recorder.startRecording();
-
-    amplitudeSubscription?.cancel();
-
-    amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        amplitudes.add(amplitude.current);
-
-        if (amplitudes.length > 100) {
-          amplitudes.removeAt(0);
-        }
-      });
-    });
-
-    setState(() {
-      isRecording = true;
-    });
   }
 
   Future<void> stopRecording() async {
-    final path = await recorder.stopRecording();
-    if (path == null) {
+    final success = await editor.stopRecording();
+
+    if (!success) {
       return;
     }
-    await amplitudeSubscription?.cancel();
-    amplitudeSubscription = null;
-
-    final waveform = amplitudes.map((v) {
-      return ((v + 60) / 60).clamp(0.05, 1.0);
-    }).toList();
-
-    final start = trimService.findSpeechStart(waveform);
-    final end = trimService.findSpeechEnd(waveform);
-    final audioDuration =
-        await editor.player.getDuration(path) ?? Duration.zero;
-
-    setState(() {
-      isRecording = false;
-
-      recordedWaveform = waveform;
-
-      amplitudes.clear();
-
-      selectedAudioFile = path;
-
-      editor.load(
-        path: path,
-        samples: waveform,
-        trimStart: start,
-        trimEnd: end,
-        duration: audioDuration,
-      );
-    });
   }
 
   Future<void> pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
-    );
-
-    if (result == null) {
-      return;
-    }
-
-    final path = result.files.single.path;
-
-    if (path == null) {
-      return;
-    }
-
-    setState(() {
-      selectedAudioFile = path;
-    });
+    await editor.importAudioFile();
   }
 
   Future<void> save() async {
@@ -278,16 +228,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
       isSaving = true;
     });
 
-    // final trimmedFile = await editor.exportTrimmed();
-
-    // debugPrint("TRIMMED FILE");
-    // debugPrint(trimmedFile);
-
     await wordRepository.createWord(
       folderId: widget.folderId,
       word: word,
       translation: translation,
-      audioFile: selectedAudioFile,
+      audioFile: editor.selectedAudioFile,
     );
 
     if (mounted) {
