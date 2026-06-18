@@ -2,11 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import 'audio_player_service.dart';
+import '../services/audio_player_service.dart';
 
 // import 'audio_trim_service.dart';
 
-import 'audio_edit_result.dart';
+import '../models/audio_edit_result.dart';
 
 class AudioEditorController extends ChangeNotifier {
   final player = AudioPlayerService();
@@ -164,10 +164,6 @@ class AudioEditorController extends ChangeNotifier {
       return null;
     }
 
-    if (duration == null) {
-      return null;
-    }
-
     if (samples.isEmpty) {
       return null;
     }
@@ -175,7 +171,7 @@ class AudioEditorController extends ChangeNotifier {
     return AudioEditResult(
       sourcePath: path!,
 
-      duration: duration!,
+      duration: duration,
 
       trimStart: trimStart,
 
@@ -228,15 +224,11 @@ class AudioEditorController extends ChangeNotifier {
   }
 
   Duration _indexToDuration(double index) {
-    if (duration == null) {
-      return Duration.zero;
-    }
-
     if (samples.isEmpty) {
       return Duration.zero;
     }
 
-    final ms = duration!.inMilliseconds * index / samples.length;
+    final ms = duration.inMilliseconds * index / samples.length;
 
     return Duration(milliseconds: ms.round());
   }

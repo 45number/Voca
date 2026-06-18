@@ -2,11 +2,11 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../core/database/database_provider.dart';
-import '../../shared/audio/audio_editor_controller.dart';
-import '../../shared/audio/passthrough_exporter.dart';
-import '../study/audio_recorder_service.dart';
-import '../../shared/audio/audio_trim_service.dart';
-import '../../shared/audio/audio_editor_widget.dart';
+import '../../shared/audio/controllers/audio_editor_controller.dart';
+import '../../shared/audio/exporters/passthrough_exporter.dart';
+import '../../shared/audio/services/audio_recorder_service.dart';
+import '../../shared/audio/services/audio_trim_service.dart';
+import '../../shared/audio/widgets/audio_editor_widget.dart';
 
 import 'dart:async';
 

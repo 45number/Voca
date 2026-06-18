@@ -5,6 +5,8 @@ import 'package:audioplayers/audioplayers.dart';
 class AudioPlayerService {
   final AudioPlayer _player = AudioPlayer();
 
+  String? _loadedPath;
+
   Timer? _timer;
 
   Duration? currentDuration;
@@ -12,6 +14,10 @@ class AudioPlayerService {
   bool isPlaying = false;
 
   Duration? pausedPosition;
+
+  AudioPlayerService() {
+    _player.setReleaseMode(ReleaseMode.stop);
+  }
 
   Stream<Duration> get positionStream {
     return _player.onPositionChanged;
@@ -89,5 +95,37 @@ class AudioPlayerService {
     _timer?.cancel();
 
     await _player.dispose();
+  }
+
+  Future<void> preload(String path) async {
+    if (path.isEmpty) {
+      return;
+    }
+
+    if (_loadedPath == path) {
+      return;
+    }
+
+    await _player.setSource(DeviceFileSource(path));
+
+    _loadedPath = path;
+  }
+
+  Future<void> play(String path) async {
+    if (path.isEmpty) {
+      return;
+    }
+
+    if (_loadedPath != path) {
+      await preload(path);
+    }
+
+    await _player.seek(Duration.zero);
+
+    await _player.resume();
+  }
+
+  Future<void> stop() async {
+    await _player.stop();
   }
 }

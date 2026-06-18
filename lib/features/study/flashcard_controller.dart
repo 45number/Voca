@@ -3,7 +3,7 @@ import 'dart:math';
 import '../../core/database/app_database.dart';
 import '../../core/database/database_provider.dart';
 import '../settings/front_side.dart';
-import '../../core/theme/theme_controller.dart';
+// import '../../core/theme/theme_controller.dart';
 
 class FlashcardData {
   final AppSetting settings;

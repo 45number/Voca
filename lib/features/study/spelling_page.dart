@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../../core/database/app_database.dart';
 import '../../core/theme/theme.dart';
 
-import 'audio_service.dart';
+// import '../../shared/audio/services/audio_service.dart';
+import '../../shared/audio/services/audio_player_service.dart';
 import 'spelling_checker.dart';
 import 'spelling_controller.dart';
 import 'spelling_data.dart';
@@ -47,7 +48,8 @@ class _SpellingPageState extends State<SpellingPage> {
 
   final checker = SpellingChecker();
 
-  final audioService = AudioService();
+  // final audioService = AudioService();
+  final audioService = AudioPlayerService();
 
   final textController = TextEditingController();
 
@@ -305,7 +307,7 @@ class _SpellingPageState extends State<SpellingPage> {
   }
 
   Future<void> playAudio() async {
-    print('SPELLING playAudio()');
+    // print('SPELLING playAudio()');
 
     final audioFile = currentWord.audioFile;
 

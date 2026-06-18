@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../audio/audio_editor_controller.dart';
+import '../controllers/audio_editor_controller.dart';
 
 class AudioEditorWidget extends StatefulWidget {
   final AudioEditorController controller;

@@ -5,7 +5,8 @@ import '../../core/theme/theme.dart';
 
 import '../settings/front_side.dart';
 
-import 'audio_service.dart';
+// import '../../shared/audio/services/audio_service.dart';
+import '../../shared/audio/services/audio_player_service.dart';
 import 'flashcard_controller.dart';
 import 'study_complete_dialog.dart';
 import 'study_mode.dart';
@@ -49,7 +50,8 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
   final session = StudySessionController();
 
-  final audioService = AudioService();
+  // final audioService = AudioService();
+  final audioService = AudioPlayerService();
 
   FlashcardData? data;
 
@@ -209,7 +211,7 @@ class _FlashcardPageState extends State<FlashcardPage> {
   }
 
   Future<void> playAudio() async {
-    print('FLASHCARD playAudio()');
+    // print('FLASHCARD playAudio()');
 
     final audioFile = currentWord.audioFile;
 
@@ -229,10 +231,10 @@ class _FlashcardPageState extends State<FlashcardPage> {
   }
 
   Future<void> onCardTap() async {
-    print('CARD TAP revealed=${session.isRevealed}');
+    // print('CARD TAP revealed=${session.isRevealed}');
 
     if (!session.isRevealed) {
-      print('REVEAL');
+      // print('REVEAL');
 
       setState(() {
         session.reveal();
@@ -240,7 +242,7 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
       if (!silentMode) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          print('AUTO PLAY AUDIO');
+          // print('AUTO PLAY AUDIO');
           playAudio();
         });
       }
