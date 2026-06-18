@@ -5,10 +5,7 @@ import '../../core/database/database_provider.dart';
 import '../../shared/audio/audio_editor_controller.dart';
 import '../study/audio_recorder_service.dart';
 import '../../shared/audio/audio_trim_service.dart';
-import '../../shared/audio/waveform_widget.dart';
-
-// import '../../shared/audio/audio_player_service.dart';
-// import '../../shared/audio/waveform_controller.dart';
+import '../../shared/audio/audio_editor_widget.dart';
 
 import 'dart:async';
 
@@ -29,24 +26,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
   List<double> amplitudes = [];
   List<double> recordedWaveform = [];
 
-  // int trimStart = 0;
-  // int trimEnd = 0;
-
-  // double? playhead;
-
-  // final waveformController = WaveformController();
-
   final editor = AudioEditorController();
-
-  // StreamSubscription<Duration>? playheadSubscription;
 
   String? selectedAudioFile;
 
   StreamSubscription? amplitudeSubscription;
-
-  // Waveform? waveform;
-
-  // final audioService = AudioService();
 
   final recorder = AudioRecorderService();
 
@@ -56,8 +40,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   final translationController = TextEditingController();
 
-  // final playerService = AudioPlayerService();
-
   @override
   void dispose() {
     wordController.dispose();
@@ -66,6 +48,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
     amplitudeSubscription?.cancel();
 
     recorder.dispose();
+
+    editor.dispose();
 
     super.dispose();
   }
@@ -164,57 +148,8 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
         const SizedBox(height: 12),
 
-        if (recordedWaveform.isNotEmpty)
-          // WaveformWidget(
-          //   samples: recordedWaveform,
-          //   // controller: waveformController,
-          //   controller: editor,
-          //   // trimStart: waveformController.trimStart,
-          //   // trimEnd: waveformController.trimEnd,
-          //   // playhead: waveformController.playhead,
-          //   // onTrimStartChanged: (value) {
-          //   //   setState(() {
-          //   //     waveformController.trimStart = value;
-          //   //   });
-          //   // },
-          //   // onTrimEndChanged: (value) {
-          //   //   setState(() {
-          //   //     waveformController.trimEnd = value;
-          //   //   });
-          //   // },
-          //   // onTrimStartChanged: (value) {
-          //   //   waveformController.setTrimStart(value);
-          //   // },
-          //   // onTrimEndChanged: (value) {
-          //   //   waveformController.setTrimEnd(value);
-          //   // },
-          //   // onPlay: playTrimmed,
-          //   onPlay: editor.play,
-          // ),
-          WaveformWidget(
-            // samples: recordedWaveform,
-            controller: editor,
+        if (recordedWaveform.isNotEmpty) AudioEditorWidget(controller: editor),
 
-            // trimStart: editor.trimStart,
-            // trimEnd: editor.trimEnd,
-            // playhead: editor.playhead,
-
-            // onTrimStartChanged: editor.setTrimStart,
-            // onTrimEndChanged: editor.setTrimEnd,
-
-            // onPlay: editor.play,
-          ),
-
-        ////////
-        // FilledButton(
-        //   onPressed: () {
-        //     waveformController.setTrimStart(5);
-        //   },
-
-        //   child: const Text("TEST"),
-        // ),
-
-        ////////
         const SizedBox(height: 32),
 
         FilledButton(
@@ -253,8 +188,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
     amplitudeSubscription?.cancel();
 
     amplitudeSubscription = recorder.onAmplitudeChanged().listen((amplitude) {
-      // debugPrint('Amplitude ${amplitude.current}');
-
       if (!mounted) {
         return;
       }
@@ -288,32 +221,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
     final start = trimService.findSpeechStart(waveform);
     final end = trimService.findSpeechEnd(waveform);
 
-    // setState(() {
-    //   isRecording = false;
-
-    //   recordedWaveform = waveform;
-
-    //   waveformController.setTrimStart(start);
-
-    //   waveformController.setTrimEnd(end);
-
-    //   ////////////////
-    //   waveformController.setPlayhead(start.toDouble());
-    //   /////////////////
-    //   amplitudes.clear();
-
-    //   selectedAudioFile = path;
-
-    //   editor.load(
-    //     path: path,
-
-    //     samples: waveform,
-
-    //     trimStart: start,
-
-    //     trimEnd: end,
-    //   );
-    // });
     setState(() {
       isRecording = false;
 
@@ -352,72 +259,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
       selectedAudioFile = path;
     });
   }
-
-  // Future<void> playTrimmed() async {
-  //   if (selectedAudioFile == null) {
-  //     return;
-  //   }
-
-  //   if (recordedWaveform.isEmpty) {
-  //     return;
-  //   }
-
-  //   if (playerService.isPlaying) {
-  //     await playerService.pause();
-
-  //     waveformController.setPlaying(false);
-
-  //     return;
-  //   }
-
-  //   if (playerService.pausedPosition != null) {
-  //     await playerService.resume();
-
-  //     waveformController.setPlaying(true);
-
-  //     return;
-  //   }
-
-  //   playheadSubscription?.cancel();
-
-  //   waveformController.setPlaying(true);
-
-  //   playheadSubscription = playerService.positionStream.listen((position) {
-  //     final trimEndPosition = waveformController.trimEnd.toDouble();
-
-  //     final duration = playerService.currentDuration;
-
-  //     if (duration == null) {
-  //       return;
-  //     }
-
-  //     if (duration.inMilliseconds == 0) {
-  //       return;
-  //     }
-
-  //     final progress = position.inMilliseconds / duration.inMilliseconds;
-
-  //     final sample = progress * recordedWaveform.length;
-
-  //     waveformController.setPlayhead(sample);
-
-  //     if (sample >= trimEndPosition) {
-  //       waveformController.resetPlayhead();
-
-  //       waveformController.setPlaying(false);
-  //     }
-  //   });
-
-  //   await playerService.playSegment(
-  //     path: selectedAudioFile!,
-
-  //     trimStart: waveformController.trimStart,
-
-  //     trimEnd: waveformController.trimEnd,
-
-  //     sampleCount: recordedWaveform.length,
-  //   );
-  // }
 
   Future<void> save() async {
     final word = wordController.text.trim();

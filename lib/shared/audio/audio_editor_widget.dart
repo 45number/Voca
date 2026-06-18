@@ -1,37 +1,18 @@
 import 'package:flutter/material.dart';
-// import '../audio/waveform_controller.dart';
 import '../audio/audio_editor_controller.dart';
 
-class WaveformWidget extends StatefulWidget {
-  // final List<double> samples;
-  // final int trimStart;
-  // final int trimEnd;
-  // final double? playhead;
-  // final ValueChanged<int>? onTrimStartChanged;
-  // final ValueChanged<int>? onTrimEndChanged;
-  // final VoidCallback? onPlay;
-  // final WaveformController? controller;
+class AudioEditorWidget extends StatefulWidget {
   final AudioEditorController controller;
 
-  const WaveformWidget({
-    super.key,
-    // required this.samples,
-    // required this.trimStart,
-    // required this.trimEnd,
-    // this.playhead,
-    // this.onTrimStartChanged,
-    // this.onTrimEndChanged,
-    // this.onPlay,
-    required this.controller,
-  });
+  const AudioEditorWidget({super.key, required this.controller});
 
   @override
-  State<WaveformWidget> createState() {
-    return _WaveformWidgetState();
+  State<AudioEditorWidget> createState() {
+    return _AudioEditorWidgetState();
   }
 }
 
-class _WaveformWidgetState extends State<WaveformWidget> {
+class _AudioEditorWidgetState extends State<AudioEditorWidget> {
   int localTrimStart = 0;
   int localTrimEnd = 0;
 
@@ -44,40 +25,15 @@ class _WaveformWidgetState extends State<WaveformWidget> {
   void initState() {
     super.initState();
 
-    // if (widget.controller != null) {
-    //   localTrimStart = widget.controller!.trimStart;
-
-    //   localTrimEnd = widget.controller!.trimEnd;
-    // } else {
-    //   localTrimStart = widget.trimStart;
-
-    //   localTrimEnd = widget.trimEnd;
-    // }
-
     localTrimStart = widget.controller.trimStart;
-
     localTrimEnd = widget.controller.trimEnd;
-
-    // localPlayhead = widget.controller?.playhead ?? widget.playhead;
     localPlayhead = widget.controller.playhead;
 
     widget.controller.addListener(_onControllerChanged);
   }
 
-  // @override
-  // void didUpdateWidget(covariant WaveformWidget oldWidget) {
-  //   super.didUpdateWidget(oldWidget);
-
-  //   if (oldWidget.trimStart != widget.trimStart ||
-  //       oldWidget.trimEnd != widget.trimEnd) {
-  //     localTrimStart = widget.trimStart;
-
-  //     localTrimEnd = widget.trimEnd;
-  //   }
-  // }
-
   @override
-  void didUpdateWidget(covariant WaveformWidget oldWidget) {
+  void didUpdateWidget(covariant AudioEditorWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
   }
 
@@ -85,13 +41,9 @@ class _WaveformWidgetState extends State<WaveformWidget> {
     if (!mounted) return;
 
     setState(() {
-      // localTrimStart = widget.controller?.trimStart ?? widget.trimStart;
-
-      // localTrimEnd = widget.controller?.trimEnd ?? widget.trimEnd;
       localTrimStart = widget.controller.trimStart;
       localTrimEnd = widget.controller.trimEnd;
 
-      // localPlayhead = widget.controller.playhead ?? widget.playhead;
       localPlayhead = widget.controller.playhead;
     });
   }
@@ -105,10 +57,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // if (widget.samples.isEmpty) {
-    //   return const SizedBox();
-    // }
-
     if (widget.controller.samples.isEmpty) {
       return const SizedBox();
     }
@@ -124,7 +72,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
             builder: (context, constraints) {
               final width = constraints.maxWidth;
 
-              // final barWidth = width / widget.samples.length;
               final barWidth = width / widget.controller.samples.length;
 
               return Stack(
@@ -192,7 +139,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                     bottom: 0,
 
                     width:
-                        // (widget.samples.length - 1 - localTrimEnd) * barWidth,
                         (widget.controller.samples.length - 1 - localTrimEnd) *
                         barWidth,
 
@@ -223,9 +169,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
 
                         index = index.clamp(0, localTrimEnd - 1);
 
-                        // setState(() {
-                        //   localTrimStart = index;
-                        // });
                         setState(() {
                           localTrimStart = index;
 
@@ -233,9 +176,6 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                         });
                       },
 
-                      // onHorizontalDragEnd: (_) {
-                      //   widget.onTrimStartChanged?.call(localTrimStart);
-                      // },
                       child: Container(
                         width: 50,
 
@@ -291,23 +231,15 @@ class _WaveformWidgetState extends State<WaveformWidget> {
                         index = index.clamp(
                           localTrimStart + 1,
 
-                          // widget.samples.length - 1,
                           widget.controller.samples.length - 1,
                         );
 
-                        // setState(() {
-                        //   localTrimEnd = index;
-                        // });
                         setState(() {
                           localTrimEnd = index;
 
                           widget.controller.setTrimEnd(localTrimEnd);
                         });
                       },
-
-                      // onHorizontalDragEnd: (_) {
-                      //   widget.onTrimEndChanged?.call(localTrimEnd);
-                      // },
                       child: Container(
                         width: 50,
 
