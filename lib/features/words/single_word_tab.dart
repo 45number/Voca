@@ -91,12 +91,36 @@ class _SingleWordTabState extends State<SingleWordTab> {
     setState(() {
       isSaving = true;
     });
+    // await wordRepository.createWord(
+    //   folderId: widget.folderId,
+    //   word: word,
+    //   translation: translation,
+    //   audioFile: editor.selectedAudioFile,
+    // );
+
+    // String? audioPath;
+
+    // final result = editor.buildResult();
+
+    // if (result != null) {
+    //   audioPath = await exporter.export(result);
+    // }
+
+    String? audioPath;
+
+    if (editor.hasAudio) {
+      final result = editor.buildResult();
+
+      audioPath = await exporter.export(result);
+    }
+
     await wordRepository.createWord(
       folderId: widget.folderId,
       word: word,
       translation: translation,
-      audioFile: editor.selectedAudioFile,
+      audioFile: audioPath,
     );
+
     if (mounted) {
       Navigator.pop(context, true);
     }

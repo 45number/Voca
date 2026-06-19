@@ -42,7 +42,9 @@ class AudioEditorController extends ChangeNotifier {
 
   bool isRecording = false;
 
-  String? selectedAudioFile;
+  // String? selectedAudioFile;
+
+  String? get selectedAudioFile => path;
 
   List<double> waveform = [];
 
@@ -176,24 +178,82 @@ class AudioEditorController extends ChangeNotifier {
     await play();
   }
 
-  AudioEditResult? buildResult() {
-    if (path == null) {
-      return null;
-    }
+  bool get hasAudio {
+    return path != null && samples.isNotEmpty;
+  }
 
-    if (samples.isEmpty) {
-      return null;
+  // bool get hasAudio {
+  //   return selectedAudioFile != null && waveform.isNotEmpty;
+  // }
+
+  // AudioEditResult? buildResult() {
+  //   if (path == null) {
+  //     return null;
+  //   }
+
+  //   if (samples.isEmpty) {
+  //     return null;
+  //   }
+
+  //   return AudioEditResult(
+  //     sourcePath: path!,
+
+  //     duration: duration,
+
+  //     trimStart: trimStart,
+
+  //     trimEnd: trimEnd,
+
+  //     sampleCount: samples.length,
+  //   );
+  // }
+
+  // AudioEditResult buildResult() {
+  //   if (!hasAudio) {
+  //     throw StateError('No audio loaded');
+  //   }
+
+  //   return AudioEditResult(
+  //     sourcePath: selectedAudioFile!,
+
+  //     trimStart: trimStart,
+
+  //     trimEnd: trimEnd,
+
+  //     samples: waveform,
+
+  //     duration: duration,
+  //   );
+  // }
+
+  // AudioEditResult buildResult() {
+  //   if (!hasAudio) {
+  //     throw StateError('No audio loaded');
+  //   }
+
+  //   return AudioEditResult(
+  //     sourcePath: selectedAudioFile!,
+
+  //     duration: duration,
+
+  //     trimStart: trimStart,
+
+  //     trimEnd: trimEnd,
+
+  //     sampleCount: samples.length,
+  //   );
+  // }
+
+  AudioEditResult buildResult() {
+    if (!hasAudio) {
+      throw StateError('No audio loaded');
     }
 
     return AudioEditResult(
       sourcePath: path!,
-
       duration: duration,
-
       trimStart: trimStart,
-
       trimEnd: trimEnd,
-
       sampleCount: samples.length,
     );
   }
@@ -285,7 +345,7 @@ class AudioEditorController extends ChangeNotifier {
 
     isRecording = false;
 
-    selectedAudioFile = path;
+    // selectedAudioFile = path;
 
     waveform = normalizedWaveform;
 
@@ -304,28 +364,28 @@ class AudioEditorController extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
-    );
+  // Future<bool> pickAudioFile() async {
+  //   final result = await FilePicker.platform.pickFiles(
+  //     type: FileType.custom,
+  //     allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+  //   );
 
-    if (result == null) {
-      return false;
-    }
+  //   if (result == null) {
+  //     return false;
+  //   }
 
-    final path = result.files.single.path;
+  //   final path = result.files.single.path;
 
-    if (path == null) {
-      return false;
-    }
+  //   if (path == null) {
+  //     return false;
+  //   }
 
-    selectedAudioFile = path;
+  //   // selectedAudioFile = path;
 
-    notifyListeners();
+  //   notifyListeners();
 
-    return true;
-  }
+  //   return true;
+  // }
 
   Future<bool> importAudioFile() async {
     final result = await FilePicker.platform.pickFiles(
@@ -357,7 +417,7 @@ class AudioEditorController extends ChangeNotifier {
 
     final audioDuration = await player.getDuration(path) ?? Duration.zero;
 
-    selectedAudioFile = path;
+    // selectedAudioFile = path;
 
     load(
       path: path,
