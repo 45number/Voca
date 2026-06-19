@@ -6,6 +6,8 @@ import '../services/audio_player_service.dart';
 import 'package:file_picker/file_picker.dart';
 import '../services/waveform_extractor_service.dart';
 import '../models/audio_edit_result.dart';
+import '../exporters/audio_exporter.dart';
+import '../exporters/passthrough_exporter.dart';
 
 class AudioEditorController extends ChangeNotifier {
   final player = AudioPlayerService();
@@ -15,6 +17,11 @@ class AudioEditorController extends ChangeNotifier {
   final trimService = AudioTrimService();
 
   final waveformExtractor = WaveformExtractorService();
+
+  AudioEditorController({AudioExporter? exporter})
+    : exporter = exporter ?? PassthroughExporter();
+
+  final AudioExporter exporter;
 
   StreamSubscription<Duration>? playheadSubscription;
 
@@ -341,5 +348,15 @@ class AudioEditorController extends ChangeNotifier {
     final millis = (d.inMilliseconds % 1000).toString().padLeft(3, '0');
 
     return "$minutes:$seconds.$millis";
+  }
+
+  Future<String?> exportAudio() async {
+    if (!hasAudio) {
+      return null;
+    }
+
+    final result = buildResult();
+
+    return exporter.export(result);
   }
 }

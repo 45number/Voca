@@ -6,7 +6,6 @@ import '../../core/database/database_provider.dart';
 
 //AudioEditor import:
 import '../../shared/audio/controllers/audio_editor_controller.dart';
-import '../../shared/audio/exporters/passthrough_exporter.dart';
 import '../../shared/audio/widgets/audio_input_widget.dart';
 
 class SingleWordTab extends StatefulWidget {
@@ -22,7 +21,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
   bool isSaving = false;
 
   final editor = AudioEditorController();
-  final exporter = PassthroughExporter();
 
   final wordController = TextEditingController();
 
@@ -96,13 +94,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
       isSaving = true;
     });
 
-    String? audioPath;
-
-    if (editor.hasAudio) {
-      final result = editor.buildResult();
-
-      audioPath = await exporter.export(result);
-    }
+    final audioPath = await editor.exportAudio();
 
     await wordRepository.createWord(
       folderId: widget.folderId,
