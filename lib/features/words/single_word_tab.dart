@@ -1,6 +1,10 @@
+//Theme imports:
 import 'package:flutter/material.dart';
 
+//Database imports:
 import '../../core/database/database_provider.dart';
+
+//AudioEditor import:
 import '../../shared/audio/controllers/audio_editor_controller.dart';
 import '../../shared/audio/exporters/passthrough_exporter.dart';
 import '../../shared/audio/widgets/audio_input_widget.dart';
@@ -91,20 +95,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
     setState(() {
       isSaving = true;
     });
-    // await wordRepository.createWord(
-    //   folderId: widget.folderId,
-    //   word: word,
-    //   translation: translation,
-    //   audioFile: editor.selectedAudioFile,
-    // );
-
-    // String? audioPath;
-
-    // final result = editor.buildResult();
-
-    // if (result != null) {
-    //   audioPath = await exporter.export(result);
-    // }
 
     String? audioPath;
 
