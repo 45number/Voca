@@ -8,16 +8,23 @@ import '../../core/database/database_provider.dart';
 import '../../shared/audio/controllers/audio_editor_controller.dart';
 import '../../shared/audio/widgets/audio_input_widget.dart';
 
-class SingleWordTab extends StatefulWidget {
+import '../../core/database/app_database.dart';
+
+import 'package:drift/drift.dart';
+
+class WordEditor extends StatefulWidget {
   final String folderId;
 
-  const SingleWordTab({super.key, required this.folderId});
+  // final dynamic initialWord;
+  final Word? initialWord;
+
+  const WordEditor({super.key, required this.folderId, this.initialWord});
 
   @override
-  State<SingleWordTab> createState() => _SingleWordTabState();
+  State<WordEditor> createState() => _WordEditorState();
 }
 
-class _SingleWordTabState extends State<SingleWordTab> {
+class _WordEditorState extends State<WordEditor> {
   bool isSaving = false;
 
   final editor = AudioEditorController();
@@ -28,15 +35,50 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   final wordFocusNode = FocusNode();
 
-  // @override
-  // void dispose() {
-  //   wordController.dispose();
-  //   translationController.dispose();
+  bool get isEditMode {
+    return widget.initialWord != null;
+  }
 
-  //   editor.dispose();
+  @override
+  void initState() {
+    super.initState();
 
-  //   super.dispose();
+    _loadInitialWord();
+  }
+
+  // Future<void> _loadInitialWord() async {
+  //   if (!isEditMode) {
+  //     return;
+  //   }
+
+  //   final word = widget.initialWord;
+
+  //   wordController.text = word.word;
+
+  //   translationController.text = word.translation;
+
+  //   if (word.audioFile != null) {
+  //     await editor.loadFile(word.audioFile);
+  //   }
   // }
+
+  Future<void> _loadInitialWord() async {
+    if (!isEditMode) {
+      return;
+    }
+
+    final word = widget.initialWord!;
+
+    wordController.text = word.word;
+
+    translationController.text = word.translation;
+
+    final audioFile = word.audioFile;
+
+    if (audioFile != null && audioFile.isNotEmpty) {
+      await editor.loadFile(audioFile);
+    }
+  }
 
   @override
   void dispose() {
@@ -108,7 +150,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
                   height: 18,
                   child: CircularProgressIndicator(),
                 )
-              : const Text('Save'),
+              : Text(isEditMode ? 'Update' : 'Save'),
         ),
       ],
     );
@@ -144,72 +186,69 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   // Future<void> save() async {
   //   final word = wordController.text.trim();
-
   //   final translation = translationController.text.trim();
-
-  //   if (word.isEmpty || translation.isEmpty) {
-  //     return;
-  //   }
-
   //   if (word.isEmpty || translation.isEmpty) {
   //     ScaffoldMessenger.of(context).showSnackBar(
   //       const SnackBar(content: Text('Word and translation are required')),
   //     );
+
   //     return;
   //   }
-
   //   setState(() {
   //     isSaving = true;
   //   });
 
-  //   // await wordRepository.createWord(
-  //   //   folderId: widget.folderId,
-  //   //   word: word,
-  //   //   translation: translation,
-  //   //   audioFile: editor.selectedAudioFile,
-  //   // );
+  //   try {
+  //     await wordRepository.createWord(
+  //       folderId: widget.folderId,
+  //       word: word,
+  //       translation: translation,
+  //       audioFile: editor.selectedAudioFile,
+  //     );
 
-  //   // editor.markSaved();
+  //     // Сообщаем контроллеру, что файл успешно сохранен
+  //     editor.markSaved();
 
-  //   // if (mounted) {
-  //   //   Navigator.pop(context, true);
-  //   // }
+  //     // Очищаем редактор аудио
+  //     await editor.reset();
 
-  //   await wordRepository.createWord(
-  //     folderId: widget.folderId,
-  //     word: word,
-  //     translation: translation,
-  //     audioFile: editor.selectedAudioFile,
-  //   );
+  //     // Очищаем поля ввода
+  //     wordController.clear();
+  //     translationController.clear();
 
-  //   editor.markSaved();
+  //     wordFocusNode.requestFocus();
 
-  //   await editor.reset();
+  //     if (!mounted) {
+  //       return;
+  //     }
 
-  //   wordController.clear();
-  //   translationController.clear();
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('Word saved'),
+  //         duration: Duration(seconds: 2),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     if (!mounted) {
+  //       return;
+  //     }
 
-  //   if (!mounted) {
-  //     return;
+  //     ScaffoldMessenger.of(
+  //       context,
+  //     ).showSnackBar(SnackBar(content: Text('Failed to save word: $e')));
+  //   } finally {
+  //     if (mounted) {
+  //       setState(() {
+  //         isSaving = false;
+  //       });
+  //     }
   //   }
-
-  //   setState(() {
-  //     isSaving = false;
-  //   });
-
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(
-  //       content: Text('Word saved'),
-  //       duration: Duration(seconds: 2),
-  //     ),
-  //   );
-
-  //   return;
   // }
 
   Future<void> save() async {
     final word = wordController.text.trim();
     final translation = translationController.text.trim();
+
     if (word.isEmpty || translation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Word and translation are required')),
@@ -217,48 +256,87 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
       return;
     }
+
     setState(() {
       isSaving = true;
     });
 
     try {
-      await wordRepository.createWord(
-        folderId: widget.folderId,
-        word: word,
-        translation: translation,
-        audioFile: editor.selectedAudioFile,
-      );
+      if (isEditMode) {
+        await wordRepository.updateWord(
+          id: widget.initialWord!.id,
 
-      // Сообщаем контроллеру, что файл успешно сохранен
-      editor.markSaved();
+          word: word,
 
-      // Очищаем редактор аудио
-      await editor.reset();
+          translation: translation,
 
-      // Очищаем поля ввода
-      wordController.clear();
-      translationController.clear();
+          audioFile: editor.selectedAudioFile,
+        );
 
-      wordFocusNode.requestFocus();
+        editor.markSaved();
 
-      if (!mounted) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Word updated'),
+
+            duration: Duration(seconds: 1),
+          ),
+        );
+
+        // Navigator.pop(context, true);
+        final updatedWord = widget.initialWord!.copyWith(
+          word: word,
+
+          translation: translation,
+
+          audioFile: Value(editor.selectedAudioFile),
+        );
+
+        Navigator.pop(context, updatedWord);
+
         return;
+      } else {
+        await wordRepository.createWord(
+          folderId: widget.folderId,
+
+          word: word,
+
+          translation: translation,
+
+          audioFile: editor.selectedAudioFile,
+        );
+
+        editor.markSaved();
+
+        await editor.reset();
+
+        wordController.clear();
+
+        translationController.clear();
+
+        wordFocusNode.requestFocus();
       }
 
+      if (!mounted) return;
+
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text(isEditMode ? 'Word updated' : 'Word saved')),
+      // );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Word saved'),
+
           duration: Duration(seconds: 2),
         ),
       );
     } catch (e) {
-      if (!mounted) {
-        return;
-      }
+      if (!mounted) return;
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save word: $e')));
+      ).showSnackBar(SnackBar(content: Text('Failed: $e')));
     } finally {
       if (mounted) {
         setState(() {

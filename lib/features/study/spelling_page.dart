@@ -18,6 +18,8 @@ import '../decks/deck_info.dart';
 import 'widgets/study_breadcrumb_bar.dart';
 import '../folders/folder_controller.dart';
 
+import '../words/word_editor_page.dart';
+
 class SpellingPage extends StatefulWidget {
   final List<Word> words;
 
@@ -122,6 +124,66 @@ class _SpellingPageState extends State<SpellingPage> {
 
   Word get currentWord => studyWords[session.currentIndex];
 
+  // Future<void> editWord() async {
+  //   final result = await Navigator.push<bool>(
+  //     context,
+  //     MaterialPageRoute(
+  //       builder: (_) => WordEditorPage(
+  //         folderId: currentWord.folderId,
+  //         initialWord: currentWord,
+  //       ),
+  //     ),
+  //   );
+
+  //   if (result == true) {
+  //     setState(() {});
+  //   }
+  // }
+
+  Future<void> editWord() async {
+    final Word? result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => WordEditorPage(
+          folderId: currentWord.folderId,
+          initialWord: currentWord,
+        ),
+      ),
+    );
+
+    if (result == null) {
+      return;
+    }
+
+    final updatedStudyWords = List<Word>.from(studyWords);
+
+    updatedStudyWords[session.currentIndex] = result;
+
+    final updatedOriginalWords = originalWords.map((word) {
+      if (word.id == result.id) {
+        return result;
+      }
+
+      return word;
+    }).toList();
+
+    data = SpellingData(
+      originalWords: updatedOriginalWords,
+      studyWords: updatedStudyWords,
+      loopCards: loopCards,
+      randomOrder: randomOrder,
+      silentMode: silentMode,
+    );
+
+    await preloadCurrentAudio();
+
+    session.resetAnswer();
+
+    textController.clear();
+
+    setState(() {});
+  }
+
   Future<void> preloadCurrentAudio() async {
     final audioFile = currentWord.audioFile;
 
@@ -164,10 +226,23 @@ class _SpellingPageState extends State<SpellingPage> {
           padding: AppPadding.screen,
           child: Column(
             children: [
-              StudyBreadcrumbBar(
-                path: breadcrumb,
-                currentIndex: session.currentIndex,
-                totalCount: studyWords.length,
+              // StudyBreadcrumbBar(
+              //   path: breadcrumb,
+              //   currentIndex: session.currentIndex,
+              //   totalCount: studyWords.length,
+              // ),
+              Row(
+                children: [
+                  Expanded(
+                    child: StudyBreadcrumbBar(
+                      path: breadcrumb,
+                      currentIndex: session.currentIndex,
+                      totalCount: studyWords.length,
+                    ),
+                  ),
+
+                  IconButton(onPressed: editWord, icon: const Icon(Icons.edit)),
+                ],
               ),
               StudyProgress(
                 currentIndex: session.currentIndex,

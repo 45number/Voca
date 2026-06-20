@@ -21,6 +21,8 @@ import '../decks/deck_info.dart';
 import '../folders/folder_controller.dart';
 import 'widgets/study_breadcrumb_bar.dart';
 
+import '../words/word_editor_page.dart';
+
 class FlashcardPage extends StatefulWidget {
   final List<Word> words;
 
@@ -129,6 +131,88 @@ class _FlashcardPageState extends State<FlashcardPage> {
 
   Word get currentWord => session.currentWord(studyWords);
 
+  Future<void> editWord() async {
+    // final result = await Navigator.push<bool>(
+    // final result = await Navigator.push<Word>(
+    final Word? result = await Navigator.push(
+      context,
+
+      MaterialPageRoute(
+        builder: (_) => WordEditorPage(
+          folderId: currentWord.folderId,
+
+          initialWord: currentWord,
+        ),
+      ),
+    );
+
+    // if (result == true) {
+    //   setState(() {});
+    // }
+    // if (result is Word) {
+    //   final updatedStudyWords = List<Word>.from(studyWords);
+
+    //   updatedStudyWords[session.currentIndex] = result;
+
+    //   final updatedOriginalWords = originalWords.map((word) {
+    //     if (word.id == result.id) {
+    //       return result;
+    //     }
+
+    //     return word;
+    //   }).toList();
+
+    //   data = FlashcardData(
+    //     settings: data!.settings,
+
+    //     originalWords: updatedOriginalWords,
+
+    //     studyWords: updatedStudyWords,
+
+    //     loopCards: loopCards,
+
+    //     randomOrder: randomOrder,
+
+    //     silentMode: silentMode,
+
+    //     frontSide: frontSide,
+    //   );
+
+    //   setState(() {});
+    // }
+    if (result != null) {
+      final updatedStudyWords = List<Word>.from(studyWords);
+
+      updatedStudyWords[session.currentIndex] = result;
+
+      final updatedOriginalWords = originalWords.map((word) {
+        if (word.id == result.id) {
+          return result;
+        }
+
+        return word;
+      }).toList();
+
+      data = FlashcardData(
+        settings: data!.settings,
+
+        originalWords: updatedOriginalWords,
+
+        studyWords: updatedStudyWords,
+
+        loopCards: loopCards,
+
+        randomOrder: randomOrder,
+
+        silentMode: silentMode,
+
+        frontSide: frontSide,
+      );
+
+      setState(() {});
+    }
+  }
+
   String get frontText {
     return frontSide == FrontSide.word
         ? currentWord.word
@@ -153,10 +237,25 @@ class _FlashcardPageState extends State<FlashcardPage> {
           padding: AppPadding.screen,
           child: Column(
             children: [
-              StudyBreadcrumbBar(
-                path: breadcrumb,
-                currentIndex: session.currentIndex,
-                totalCount: studyWords.length,
+              // StudyBreadcrumbBar(
+              //   path: breadcrumb,
+              //   currentIndex: session.currentIndex,
+              //   totalCount: studyWords.length,
+              // ),
+              Row(
+                children: [
+                  Expanded(
+                    child: StudyBreadcrumbBar(
+                      path: breadcrumb,
+
+                      currentIndex: session.currentIndex,
+
+                      totalCount: studyWords.length,
+                    ),
+                  ),
+
+                  IconButton(onPressed: editWord, icon: const Icon(Icons.edit)),
+                ],
               ),
 
               StudyProgress(
