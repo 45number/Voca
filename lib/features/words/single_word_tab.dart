@@ -1,9 +1,11 @@
+//Theme imports:
 import 'package:flutter/material.dart';
 
+//Database imports:
 import '../../core/database/database_provider.dart';
+
+//AudioEditor import:
 import '../../shared/audio/controllers/audio_editor_controller.dart';
-import '../../shared/audio/exporters/passthrough_exporter.dart';
-import '../../shared/audio/widgets/audio_editor_widget.dart';
 import '../../shared/audio/widgets/audio_input_widget.dart';
 
 class SingleWordTab extends StatefulWidget {
@@ -19,7 +21,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
   bool isSaving = false;
 
   final editor = AudioEditorController();
-  final exporter = PassthroughExporter();
 
   final wordController = TextEditingController();
 
@@ -46,7 +47,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
     wordFocusNode.dispose();
 
     editor.dispose();
-
     super.dispose();
   }
 
@@ -97,34 +97,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
         const SizedBox(height: 12),
 
         AudioInputWidget(controller: editor),
-
-        const SizedBox(height: 24),
-
-        const SizedBox(height: 12),
-
-        AnimatedBuilder(
-          animation: editor,
-          builder: (_, __) {
-            return Text(
-              editor.selectedAudioFile == null
-                  ? 'No audio selected'
-                  : editor.selectedAudioFile!.split('\\').last,
-            );
-          },
-        ),
-
-        const SizedBox(height: 12),
-
-        AnimatedBuilder(
-          animation: editor,
-          builder: (_, __) {
-            if (editor.waveform.isEmpty) {
-              return const SizedBox();
-            }
-
-            return AudioEditorWidget(controller: editor);
-          },
-        ),
 
         const SizedBox(height: 32),
 
@@ -238,7 +210,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
   Future<void> save() async {
     final word = wordController.text.trim();
     final translation = translationController.text.trim();
-
     if (word.isEmpty || translation.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Word and translation are required')),
@@ -246,7 +217,6 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
       return;
     }
-
     setState(() {
       isSaving = true;
     });

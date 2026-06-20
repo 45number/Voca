@@ -3,16 +3,13 @@ import 'dart:io';
 
 import '../services/audio_recorder_service.dart';
 import '../services/audio_trim_service.dart';
-
 import 'package:flutter/foundation.dart';
-
 import '../services/audio_player_service.dart';
-
 import 'package:file_picker/file_picker.dart';
-
 import '../services/waveform_extractor_service.dart';
-
 import '../models/audio_edit_result.dart';
+import '../exporters/audio_exporter.dart';
+import '../exporters/passthrough_exporter.dart';
 
 class AudioEditorController extends ChangeNotifier {
   final player = AudioPlayerService();
@@ -22,6 +19,11 @@ class AudioEditorController extends ChangeNotifier {
   final trimService = AudioTrimService();
 
   final waveformExtractor = WaveformExtractorService();
+
+  AudioEditorController({AudioExporter? exporter})
+    : exporter = exporter ?? PassthroughExporter();
+
+  final AudioExporter exporter;
 
   StreamSubscription<Duration>? playheadSubscription;
 
@@ -43,6 +45,7 @@ class AudioEditorController extends ChangeNotifier {
 
   bool isRecording = false;
 
+  // String? get selectedAudioFile => path;
   String? selectedAudioFile;
 
   bool _ownsSelectedAudio = false;
@@ -61,6 +64,8 @@ class AudioEditorController extends ChangeNotifier {
     required Duration duration,
   }) {
     this.path = path;
+
+    selectedAudioFile = path;
 
     this.duration = duration;
 
@@ -181,24 +186,20 @@ class AudioEditorController extends ChangeNotifier {
     await play();
   }
 
-  AudioEditResult? buildResult() {
-    if (path == null) {
-      return null;
-    }
+  bool get hasAudio {
+    return path != null && samples.isNotEmpty;
+  }
 
-    if (samples.isEmpty) {
-      return null;
+  AudioEditResult buildResult() {
+    if (!hasAudio) {
+      throw StateError('No audio loaded');
     }
 
     return AudioEditResult(
       sourcePath: path!,
-
       duration: duration,
-
       trimStart: trimStart,
-
       trimEnd: trimEnd,
-
       sampleCount: samples.length,
     );
   }
@@ -331,29 +332,6 @@ class AudioEditorController extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> pickAudioFile() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
-    );
-
-    if (result == null) {
-      return false;
-    }
-
-    final path = result.files.single.path;
-
-    if (path == null) {
-      return false;
-    }
-
-    selectedAudioFile = path;
-
-    notifyListeners();
-
-    return true;
-  }
-
   Future<bool> importAudioFile() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -381,11 +359,8 @@ class AudioEditorController extends ChangeNotifier {
     await cleanupSelectedAudio();
 
     final waveform = await waveformExtractor.extract(path);
-
     final start = trimService.findSpeechStart(waveform);
-
     final end = trimService.findSpeechEnd(waveform);
-
     final audioDuration = await player.getDuration(path) ?? Duration.zero;
 
     // selectedAudioFile = path;
@@ -407,15 +382,10 @@ class AudioEditorController extends ChangeNotifier {
     if (samples.isEmpty) return "00:00";
 
     final ratio = sampleIndex / samples.length;
-
     final ms = duration.inMilliseconds * ratio;
-
     final d = Duration(milliseconds: ms.toInt());
-
     final minutes = d.inMinutes.toString().padLeft(2, '0');
-
     final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-
     final millis = (d.inMilliseconds % 1000).toString().padLeft(3, '0');
 
     return "$minutes:$seconds.$millis";

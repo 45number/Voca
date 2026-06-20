@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/audio_editor_controller.dart';
+import 'audio_editor_widget.dart';
 
 class AudioInputWidget extends StatelessWidget {
   final AudioEditorController controller;
@@ -93,6 +94,18 @@ class AudioInputWidget extends StatelessWidget {
                 label: const Text('Attach Audio File'),
               ),
             ),
+            const SizedBox(height: 12),
+
+            Text(
+              controller.selectedAudioFile == null
+                  ? 'No audio selected'
+                  : controller.selectedAudioFile!.split('\\').last,
+            ),
+
+            const SizedBox(height: 12),
+
+            if (controller.waveform.isNotEmpty)
+              AudioEditorWidget(controller: controller),
           ],
         );
       },
