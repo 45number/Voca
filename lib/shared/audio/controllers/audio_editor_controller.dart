@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import '../services/audio_recorder_service.dart';
 import '../services/audio_trim_service.dart';
@@ -43,6 +44,10 @@ class AudioEditorController extends ChangeNotifier {
   bool isRecording = false;
 
   String? selectedAudioFile;
+
+  bool _ownsSelectedAudio = false;
+
+  bool get ownsSelectedAudio => _ownsSelectedAudio;
 
   List<double> waveform = [];
 
@@ -198,9 +203,22 @@ class AudioEditorController extends ChangeNotifier {
     );
   }
 
+  // @override
+  // void dispose() {
+  //   playheadSubscription?.cancel();
+
+  //   player.dispose();
+
+  //   super.dispose();
+  // }
+
   @override
   void dispose() {
+    cleanupSelectedAudio();
+
     playheadSubscription?.cancel();
+
+    amplitudeSubscription?.cancel();
 
     player.dispose();
 
@@ -283,9 +301,18 @@ class AudioEditorController extends ChangeNotifier {
 
     final audioDuration = await player.getDuration(path) ?? Duration.zero;
 
+    // isRecording = false;
+
+    // selectedAudioFile = path;
+
+    // waveform = normalizedWaveform;
+
     isRecording = false;
 
+    await cleanupSelectedAudio();
+
     selectedAudioFile = path;
+    _ownsSelectedAudio = true;
 
     waveform = normalizedWaveform;
 
@@ -348,7 +375,11 @@ class AudioEditorController extends ChangeNotifier {
     return true;
   }
 
+  // Future<void> loadFile(String path) async {
+  //   final waveform = await waveformExtractor.extract(path);
   Future<void> loadFile(String path) async {
+    await cleanupSelectedAudio();
+
     final waveform = await waveformExtractor.extract(path);
 
     final start = trimService.findSpeechStart(waveform);
@@ -357,7 +388,9 @@ class AudioEditorController extends ChangeNotifier {
 
     final audioDuration = await player.getDuration(path) ?? Duration.zero;
 
+    // selectedAudioFile = path;
     selectedAudioFile = path;
+    _ownsSelectedAudio = false;
 
     load(
       path: path,
@@ -386,5 +419,84 @@ class AudioEditorController extends ChangeNotifier {
     final millis = (d.inMilliseconds % 1000).toString().padLeft(3, '0');
 
     return "$minutes:$seconds.$millis";
+  }
+
+  Future<void> cleanupSelectedAudio() async {
+    if (!_ownsSelectedAudio || selectedAudioFile == null) {
+      return;
+    }
+
+    try {
+      final file = File(selectedAudioFile!);
+
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (e) {
+      print('Failed to delete temp audio: $e');
+    }
+
+    selectedAudioFile = null;
+    _ownsSelectedAudio = false;
+  }
+
+  void markSaved() {
+    _ownsSelectedAudio = false;
+  }
+
+  // Future<void> reset() async {
+  //   await cleanupSelectedAudio();
+
+  //   samples.clear();
+
+  //   waveform.clear();
+
+  //   liveWaveform.clear();
+
+  //   selectedAudioFile = null;
+
+  //   path = null;
+
+  //   duration = Duration.zero;
+
+  //   trimStart = 0;
+
+  //   trimEnd = 0;
+
+  //   playhead = 0;
+
+  //   isPlaying = false;
+
+  //   isRecording = false;
+
+  //   notifyListeners();
+  // }
+
+  Future<void> reset() async {
+    await cleanupSelectedAudio();
+
+    samples = [];
+
+    waveform = [];
+
+    liveWaveform = [];
+
+    selectedAudioFile = null;
+
+    path = null;
+
+    duration = Duration.zero;
+
+    trimStart = 0;
+
+    trimEnd = 0;
+
+    playhead = 0;
+
+    isPlaying = false;
+
+    isRecording = false;
+
+    notifyListeners();
   }
 }

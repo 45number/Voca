@@ -25,10 +25,25 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
   final translationController = TextEditingController();
 
+  final wordFocusNode = FocusNode();
+
+  // @override
+  // void dispose() {
+  //   wordController.dispose();
+  //   translationController.dispose();
+
+  //   editor.dispose();
+
+  //   super.dispose();
+  // }
+
   @override
   void dispose() {
     wordController.dispose();
+
     translationController.dispose();
+
+    wordFocusNode.dispose();
 
     editor.dispose();
 
@@ -40,8 +55,21 @@ class _SingleWordTabState extends State<SingleWordTab> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // TextField(
+        //   controller: wordController,
+        //   textDirection: TextDirection.rtl,
+        //   decoration: const InputDecoration(
+        //     labelText: 'Word',
+        //     border: OutlineInputBorder(),
+        //   ),
+        // ),
         TextField(
           controller: wordController,
+
+          focusNode: wordFocusNode,
+
+          textDirection: TextDirection.rtl,
+
           decoration: const InputDecoration(
             labelText: 'Word',
             border: OutlineInputBorder(),
@@ -52,6 +80,7 @@ class _SingleWordTabState extends State<SingleWordTab> {
 
         TextField(
           controller: translationController,
+          textDirection: TextDirection.ltr,
           decoration: const InputDecoration(
             labelText: 'Translation',
             border: OutlineInputBorder(),
@@ -66,85 +95,11 @@ class _SingleWordTabState extends State<SingleWordTab> {
         ),
 
         const SizedBox(height: 12),
-        ///////////////////////////////////
-        const Text(
-          'AudioInputWidget Start',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+
         AudioInputWidget(controller: editor),
-        const Text(
-          'AudioInputWidget End',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
 
         const SizedBox(height: 24),
 
-        /////////////////////////////
-        // AnimatedBuilder(
-        //   animation: editor,
-        //   builder: (_, __) {
-        //     if (editor.isRecording) {
-        //       return FilledButton.icon(
-        //         onPressed: stopRecording,
-        //         icon: const Icon(Icons.stop),
-        //         label: const Text('Stop Recording'),
-        //       );
-        //     }
-
-        //     return OutlinedButton.icon(
-        //       onPressed: startRecording,
-        //       icon: const Icon(Icons.mic),
-        //       label: const Text('Start Recording'),
-        //     );
-        //   },
-        // ),
-
-        // AnimatedBuilder(
-        //   animation: editor,
-        //   builder: (_, __) {
-        //     if (!editor.isRecording) {
-        //       return const SizedBox();
-        //     }
-
-        //     return Container(
-        //       height: 80,
-        //       margin: const EdgeInsets.only(top: 12, bottom: 12),
-        //       padding: const EdgeInsets.symmetric(horizontal: 8),
-        //       decoration: BoxDecoration(
-        //         border: Border.all(
-        //           color: Theme.of(context).colorScheme.outline,
-        //         ),
-        //         borderRadius: BorderRadius.circular(12),
-        //       ),
-        //       child: Row(
-        //         crossAxisAlignment: CrossAxisAlignment.end,
-        //         children: editor.liveWaveform.map((value) {
-        //           final normalized = ((value + 60) / 60).clamp(0.05, 1.0);
-
-        //           return Expanded(
-        //             child: Padding(
-        //               padding: const EdgeInsets.symmetric(horizontal: 1),
-        //               child: Container(
-        //                 height: normalized * 60,
-        //                 decoration: BoxDecoration(
-        //                   color: Theme.of(context).colorScheme.primary,
-        //                   borderRadius: BorderRadius.circular(2),
-        //                 ),
-        //               ),
-        //             ),
-        //           );
-        //         }).toList(),
-        //       ),
-        //     );
-        //   },
-        // ),
-        // const SizedBox(height: 8),
-
-        // OutlinedButton.icon(
-        //   onPressed: pickAudioFile,
-        //   icon: const Icon(Icons.attach_file),
-        //   label: const Text('Attach Audio File'),
-        // ),
         const SizedBox(height: 12),
 
         AnimatedBuilder(
@@ -215,12 +170,80 @@ class _SingleWordTabState extends State<SingleWordTab> {
     await editor.importAudioFile();
   }
 
+  // Future<void> save() async {
+  //   final word = wordController.text.trim();
+
+  //   final translation = translationController.text.trim();
+
+  //   if (word.isEmpty || translation.isEmpty) {
+  //     return;
+  //   }
+
+  //   if (word.isEmpty || translation.isEmpty) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Word and translation are required')),
+  //     );
+  //     return;
+  //   }
+
+  //   setState(() {
+  //     isSaving = true;
+  //   });
+
+  //   // await wordRepository.createWord(
+  //   //   folderId: widget.folderId,
+  //   //   word: word,
+  //   //   translation: translation,
+  //   //   audioFile: editor.selectedAudioFile,
+  //   // );
+
+  //   // editor.markSaved();
+
+  //   // if (mounted) {
+  //   //   Navigator.pop(context, true);
+  //   // }
+
+  //   await wordRepository.createWord(
+  //     folderId: widget.folderId,
+  //     word: word,
+  //     translation: translation,
+  //     audioFile: editor.selectedAudioFile,
+  //   );
+
+  //   editor.markSaved();
+
+  //   await editor.reset();
+
+  //   wordController.clear();
+  //   translationController.clear();
+
+  //   if (!mounted) {
+  //     return;
+  //   }
+
+  //   setState(() {
+  //     isSaving = false;
+  //   });
+
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(
+  //       content: Text('Word saved'),
+  //       duration: Duration(seconds: 2),
+  //     ),
+  //   );
+
+  //   return;
+  // }
+
   Future<void> save() async {
     final word = wordController.text.trim();
-
     final translation = translationController.text.trim();
 
     if (word.isEmpty || translation.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Word and translation are required')),
+      );
+
       return;
     }
 
@@ -228,15 +251,50 @@ class _SingleWordTabState extends State<SingleWordTab> {
       isSaving = true;
     });
 
-    await wordRepository.createWord(
-      folderId: widget.folderId,
-      word: word,
-      translation: translation,
-      audioFile: editor.selectedAudioFile,
-    );
+    try {
+      await wordRepository.createWord(
+        folderId: widget.folderId,
+        word: word,
+        translation: translation,
+        audioFile: editor.selectedAudioFile,
+      );
 
-    if (mounted) {
-      Navigator.pop(context, true);
+      // Сообщаем контроллеру, что файл успешно сохранен
+      editor.markSaved();
+
+      // Очищаем редактор аудио
+      await editor.reset();
+
+      // Очищаем поля ввода
+      wordController.clear();
+      translationController.clear();
+
+      wordFocusNode.requestFocus();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Word saved'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to save word: $e')));
+    } finally {
+      if (mounted) {
+        setState(() {
+          isSaving = false;
+        });
+      }
     }
   }
 }
