@@ -187,4 +187,8 @@ class FolderRepository {
 
     return result;
   }
+
+  Future<void> upsertFolder(FoldersCompanion folder) async {
+    await database.into(database.folders).insertOnConflictUpdate(folder);
+  }
 }

@@ -392,4 +392,14 @@ class WordRepository {
         ))
         .get();
   }
+
+  Future<List<Word>> getAllWords() {
+    return (database.select(
+      database.words,
+    )..where((w) => w.deleted.equals(false))).get();
+  }
+
+  Future<void> upsertWord(WordsCompanion word) async {
+    await database.into(database.words).insertOnConflictUpdate(word);
+  }
 }

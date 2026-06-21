@@ -26,6 +26,10 @@ import 'widgets/folder_tile.dart';
 import '../study/spelling_page.dart';
 import 'dialogs/move_folder_dialog.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../account/account_page.dart';
+
 class FolderPage extends StatefulWidget {
   final Folder? folder;
 
@@ -99,7 +103,40 @@ class _FolderPageState extends State<FolderPage> {
                 showDifficultWordsDialog();
               },
             ),
+          // IconButton(
+          //   icon: Icon(
+          //     FirebaseAuth.instance.currentUser == null
+          //         ? Icons.cloud_off
+          //         : Icons.cloud_done,
+          //   ),
 
+          //   onPressed: () {
+          //     Navigator.push(
+          //       context,
+
+          //       MaterialPageRoute(builder: (_) => const AccountPage()),
+          //     );
+          //   },
+          // ),
+          StreamBuilder<User?>(
+            stream: FirebaseAuth.instance.authStateChanges(),
+
+            builder: (context, snapshot) {
+              final user = snapshot.data;
+
+              return IconButton(
+                icon: Icon(user == null ? Icons.cloud_off : Icons.cloud_sync),
+
+                onPressed: () {
+                  Navigator.push(
+                    context,
+
+                    MaterialPageRoute(builder: (_) => const AccountPage()),
+                  );
+                },
+              );
+            },
+          ),
           if (isRoot)
             IconButton(
               icon: const Icon(Icons.settings),

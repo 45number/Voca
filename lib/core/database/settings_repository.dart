@@ -80,4 +80,8 @@ class SettingsRepository {
       AppSettingsCompanion(themeMode: Value(value), updatedAt: Value(_now)),
     );
   }
+
+  Future<void> upsertSettings(AppSettingsCompanion settings) async {
+    await database.into(database.appSettings).insertOnConflictUpdate(settings);
+  }
 }
