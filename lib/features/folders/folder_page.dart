@@ -448,8 +448,13 @@ class _FolderPageState extends State<FolderPage> {
                   id: 'difficult',
                   name: 'Difficult words',
                   parentId: null,
-                  deleted: false,
+
+                  createdAt: 0,
                   updatedAt: 0,
+
+                  sortOrder: 0,
+
+                  deleted: false,
                 ),
             deck: const DeckInfo(index: 1, wordCount: 0),
             customBreadcrumb: breadcrumb,

@@ -19,15 +19,50 @@ class FolderRepository {
         .get();
   }
 
+  // Future<void> createFolder(String name, {String? parentId}) async {
+  //   await database
+  //       .into(database.folders)
+  //       .insert(
+  //         FoldersCompanion.insert(
+  //           id: DateTime.now().millisecondsSinceEpoch.toString(),
+  //           name: name,
+  //           parentId: Value(parentId),
+  //           updatedAt: DateTime.now().millisecondsSinceEpoch,
+  //         ),
+  //       );
+  // }
+
   Future<void> createFolder(String name, {String? parentId}) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
     await database
         .into(database.folders)
         .insert(
+          // FoldersCompanion.insert(
+          //   id: now.toString(),
+
+          //   name: name,
+
+          //   parentId: Value(parentId),
+
+          //   createdAt: now,
+
+          //   updatedAt: now,
+
+          //   sortOrder: const Value(0),
+          // ),
           FoldersCompanion.insert(
-            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            id: now.toString(),
+
             name: name,
+
             parentId: Value(parentId),
-            updatedAt: DateTime.now().millisecondsSinceEpoch,
+
+            createdAt: Value(now),
+
+            updatedAt: now,
+
+            sortOrder: const Value(0),
           ),
         );
   }

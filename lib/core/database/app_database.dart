@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -41,6 +41,30 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(
           words,
           words.difficultSpelling as GeneratedColumn<Object>,
+        );
+      }
+
+      if (from < 5) {
+        await m.addColumn(
+          folders,
+          folders.createdAt as GeneratedColumn<Object>,
+        );
+
+        await m.addColumn(
+          folders,
+          folders.sortOrder as GeneratedColumn<Object>,
+        );
+
+        await m.addColumn(words, words.createdAt as GeneratedColumn<Object>);
+
+        await m.addColumn(
+          appSettings,
+          appSettings.createdAt as GeneratedColumn<Object>,
+        );
+
+        await m.addColumn(
+          appSettings,
+          appSettings.updatedAt as GeneratedColumn<Object>,
         );
       }
     },

@@ -37,6 +37,18 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -47,6 +59,18 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
   );
   static const VerificationMeta _deletedMeta = const VerificationMeta(
     'deleted',
@@ -68,7 +92,9 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     id,
     name,
     parentId,
+    createdAt,
     updatedAt,
+    sortOrder,
     deleted,
   ];
   @override
@@ -102,6 +128,12 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
         parentId.isAcceptableOrUnknown(data['parent_id']!, _parentIdMeta),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -109,6 +141,12 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
       );
     } else if (isInserting) {
       context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
     }
     if (data.containsKey('deleted')) {
       context.handle(
@@ -137,9 +175,17 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
         DriftSqlType.string,
         data['${effectivePrefix}parent_id'],
       ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
+      )!,
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
       )!,
       deleted: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -158,13 +204,17 @@ class Folder extends DataClass implements Insertable<Folder> {
   final String id;
   final String name;
   final String? parentId;
+  final int createdAt;
   final int updatedAt;
+  final int sortOrder;
   final bool deleted;
   const Folder({
     required this.id,
     required this.name,
     this.parentId,
+    required this.createdAt,
     required this.updatedAt,
+    required this.sortOrder,
     required this.deleted,
   });
   @override
@@ -175,7 +225,9 @@ class Folder extends DataClass implements Insertable<Folder> {
     if (!nullToAbsent || parentId != null) {
       map['parent_id'] = Variable<String>(parentId);
     }
+    map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    map['sort_order'] = Variable<int>(sortOrder);
     map['deleted'] = Variable<bool>(deleted);
     return map;
   }
@@ -187,7 +239,9 @@ class Folder extends DataClass implements Insertable<Folder> {
       parentId: parentId == null && nullToAbsent
           ? const Value.absent()
           : Value(parentId),
+      createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      sortOrder: Value(sortOrder),
       deleted: Value(deleted),
     );
   }
@@ -201,7 +255,9 @@ class Folder extends DataClass implements Insertable<Folder> {
       id: serializer.fromJson<String>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       parentId: serializer.fromJson<String?>(json['parentId']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       deleted: serializer.fromJson<bool>(json['deleted']),
     );
   }
@@ -212,7 +268,9 @@ class Folder extends DataClass implements Insertable<Folder> {
       'id': serializer.toJson<String>(id),
       'name': serializer.toJson<String>(name),
       'parentId': serializer.toJson<String?>(parentId),
+      'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'deleted': serializer.toJson<bool>(deleted),
     };
   }
@@ -221,13 +279,17 @@ class Folder extends DataClass implements Insertable<Folder> {
     String? id,
     String? name,
     Value<String?> parentId = const Value.absent(),
+    int? createdAt,
     int? updatedAt,
+    int? sortOrder,
     bool? deleted,
   }) => Folder(
     id: id ?? this.id,
     name: name ?? this.name,
     parentId: parentId.present ? parentId.value : this.parentId,
+    createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    sortOrder: sortOrder ?? this.sortOrder,
     deleted: deleted ?? this.deleted,
   );
   Folder copyWithCompanion(FoldersCompanion data) {
@@ -235,7 +297,9 @@ class Folder extends DataClass implements Insertable<Folder> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       parentId: data.parentId.present ? data.parentId.value : this.parentId,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
   }
@@ -246,14 +310,17 @@ class Folder extends DataClass implements Insertable<Folder> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('parentId: $parentId, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('deleted: $deleted')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, parentId, updatedAt, deleted);
+  int get hashCode =>
+      Object.hash(id, name, parentId, createdAt, updatedAt, sortOrder, deleted);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -261,7 +328,9 @@ class Folder extends DataClass implements Insertable<Folder> {
           other.id == this.id &&
           other.name == this.name &&
           other.parentId == this.parentId &&
+          other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
+          other.sortOrder == this.sortOrder &&
           other.deleted == this.deleted);
 }
 
@@ -269,14 +338,18 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
   final Value<String> id;
   final Value<String> name;
   final Value<String?> parentId;
+  final Value<int> createdAt;
   final Value<int> updatedAt;
+  final Value<int> sortOrder;
   final Value<bool> deleted;
   final Value<int> rowid;
   const FoldersCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.parentId = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   });
@@ -284,7 +357,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     required String id,
     required String name,
     this.parentId = const Value.absent(),
+    this.createdAt = const Value.absent(),
     required int updatedAt,
+    this.sortOrder = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
@@ -294,7 +369,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     Expression<String>? id,
     Expression<String>? name,
     Expression<String>? parentId,
+    Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<int>? sortOrder,
     Expression<bool>? deleted,
     Expression<int>? rowid,
   }) {
@@ -302,7 +379,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (parentId != null) 'parent_id': parentId,
+      if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
     });
@@ -312,7 +391,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     Value<String>? id,
     Value<String>? name,
     Value<String?>? parentId,
+    Value<int>? createdAt,
     Value<int>? updatedAt,
+    Value<int>? sortOrder,
     Value<bool>? deleted,
     Value<int>? rowid,
   }) {
@@ -320,7 +401,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       id: id ?? this.id,
       name: name ?? this.name,
       parentId: parentId ?? this.parentId,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      sortOrder: sortOrder ?? this.sortOrder,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
     );
@@ -338,8 +421,14 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     if (parentId.present) {
       map['parent_id'] = Variable<String>(parentId.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
+    }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
     }
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
@@ -356,7 +445,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('parentId: $parentId, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
           ..write(')'))
@@ -449,6 +540,18 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -484,6 +587,7 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
     audioFile,
     difficultMemorizing,
     difficultSpelling,
+    createdAt,
     updatedAt,
     deleted,
   ];
@@ -555,6 +659,12 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
         ),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -573,7 +683,7 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {id};
+  Set<GeneratedColumn> get $primaryKey => const {};
   @override
   Word map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
@@ -606,6 +716,10 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
         DriftSqlType.bool,
         data['${effectivePrefix}difficult_spelling'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
@@ -631,6 +745,7 @@ class Word extends DataClass implements Insertable<Word> {
   final String? audioFile;
   final bool difficultMemorizing;
   final bool difficultSpelling;
+  final int createdAt;
   final int updatedAt;
   final bool deleted;
   const Word({
@@ -641,6 +756,7 @@ class Word extends DataClass implements Insertable<Word> {
     this.audioFile,
     required this.difficultMemorizing,
     required this.difficultSpelling,
+    required this.createdAt,
     required this.updatedAt,
     required this.deleted,
   });
@@ -656,6 +772,7 @@ class Word extends DataClass implements Insertable<Word> {
     }
     map['difficult_memorizing'] = Variable<bool>(difficultMemorizing);
     map['difficult_spelling'] = Variable<bool>(difficultSpelling);
+    map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
     map['deleted'] = Variable<bool>(deleted);
     return map;
@@ -672,6 +789,7 @@ class Word extends DataClass implements Insertable<Word> {
           : Value(audioFile),
       difficultMemorizing: Value(difficultMemorizing),
       difficultSpelling: Value(difficultSpelling),
+      createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       deleted: Value(deleted),
     );
@@ -692,6 +810,7 @@ class Word extends DataClass implements Insertable<Word> {
         json['difficultMemorizing'],
       ),
       difficultSpelling: serializer.fromJson<bool>(json['difficultSpelling']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       deleted: serializer.fromJson<bool>(json['deleted']),
     );
@@ -707,6 +826,7 @@ class Word extends DataClass implements Insertable<Word> {
       'audioFile': serializer.toJson<String?>(audioFile),
       'difficultMemorizing': serializer.toJson<bool>(difficultMemorizing),
       'difficultSpelling': serializer.toJson<bool>(difficultSpelling),
+      'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'deleted': serializer.toJson<bool>(deleted),
     };
@@ -720,6 +840,7 @@ class Word extends DataClass implements Insertable<Word> {
     Value<String?> audioFile = const Value.absent(),
     bool? difficultMemorizing,
     bool? difficultSpelling,
+    int? createdAt,
     int? updatedAt,
     bool? deleted,
   }) => Word(
@@ -730,6 +851,7 @@ class Word extends DataClass implements Insertable<Word> {
     audioFile: audioFile.present ? audioFile.value : this.audioFile,
     difficultMemorizing: difficultMemorizing ?? this.difficultMemorizing,
     difficultSpelling: difficultSpelling ?? this.difficultSpelling,
+    createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deleted: deleted ?? this.deleted,
   );
@@ -748,6 +870,7 @@ class Word extends DataClass implements Insertable<Word> {
       difficultSpelling: data.difficultSpelling.present
           ? data.difficultSpelling.value
           : this.difficultSpelling,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
     );
@@ -763,6 +886,7 @@ class Word extends DataClass implements Insertable<Word> {
           ..write('audioFile: $audioFile, ')
           ..write('difficultMemorizing: $difficultMemorizing, ')
           ..write('difficultSpelling: $difficultSpelling, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted')
           ..write(')'))
@@ -778,6 +902,7 @@ class Word extends DataClass implements Insertable<Word> {
     audioFile,
     difficultMemorizing,
     difficultSpelling,
+    createdAt,
     updatedAt,
     deleted,
   );
@@ -792,6 +917,7 @@ class Word extends DataClass implements Insertable<Word> {
           other.audioFile == this.audioFile &&
           other.difficultMemorizing == this.difficultMemorizing &&
           other.difficultSpelling == this.difficultSpelling &&
+          other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.deleted == this.deleted);
 }
@@ -804,6 +930,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
   final Value<String?> audioFile;
   final Value<bool> difficultMemorizing;
   final Value<bool> difficultSpelling;
+  final Value<int> createdAt;
   final Value<int> updatedAt;
   final Value<bool> deleted;
   final Value<int> rowid;
@@ -815,6 +942,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     this.audioFile = const Value.absent(),
     this.difficultMemorizing = const Value.absent(),
     this.difficultSpelling = const Value.absent(),
+    this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -827,6 +955,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     this.audioFile = const Value.absent(),
     this.difficultMemorizing = const Value.absent(),
     this.difficultSpelling = const Value.absent(),
+    this.createdAt = const Value.absent(),
     required int updatedAt,
     this.deleted = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -843,6 +972,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     Expression<String>? audioFile,
     Expression<bool>? difficultMemorizing,
     Expression<bool>? difficultSpelling,
+    Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<bool>? deleted,
     Expression<int>? rowid,
@@ -856,6 +986,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
       if (difficultMemorizing != null)
         'difficult_memorizing': difficultMemorizing,
       if (difficultSpelling != null) 'difficult_spelling': difficultSpelling,
+      if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deleted != null) 'deleted': deleted,
       if (rowid != null) 'rowid': rowid,
@@ -870,6 +1001,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     Value<String?>? audioFile,
     Value<bool>? difficultMemorizing,
     Value<bool>? difficultSpelling,
+    Value<int>? createdAt,
     Value<int>? updatedAt,
     Value<bool>? deleted,
     Value<int>? rowid,
@@ -882,6 +1014,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
       audioFile: audioFile ?? this.audioFile,
       difficultMemorizing: difficultMemorizing ?? this.difficultMemorizing,
       difficultSpelling: difficultSpelling ?? this.difficultSpelling,
+      createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deleted: deleted ?? this.deleted,
       rowid: rowid ?? this.rowid,
@@ -912,6 +1045,9 @@ class WordsCompanion extends UpdateCompanion<Word> {
     if (difficultSpelling.present) {
       map['difficult_spelling'] = Variable<bool>(difficultSpelling.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
@@ -934,6 +1070,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
           ..write('audioFile: $audioFile, ')
           ..write('difficultMemorizing: $difficultMemorizing, ')
           ..write('difficultSpelling: $difficultSpelling, ')
+          ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted, ')
           ..write('rowid: $rowid')
@@ -1038,6 +1175,30 @@ class $AppSettingsTable extends AppSettings
     requiredDuringInsert: false,
     defaultValue: const Constant(0),
   );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<int> createdAt = GeneratedColumn<int>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<int> updatedAt = GeneratedColumn<int>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1047,6 +1208,8 @@ class $AppSettingsTable extends AppSettings
     randomOrder,
     silentMode,
     themeMode,
+    createdAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1105,6 +1268,18 @@ class $AppSettingsTable extends AppSettings
         themeMode.isAcceptableOrUnknown(data['theme_mode']!, _themeModeMeta),
       );
     }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1142,6 +1317,14 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}theme_mode'],
       )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -1163,6 +1346,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   /// 1 = Light
   /// 2 = Dark
   final int themeMode;
+  final int createdAt;
+  final int updatedAt;
   const AppSetting({
     required this.id,
     required this.wordsPerDay,
@@ -1171,6 +1356,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.randomOrder,
     required this.silentMode,
     required this.themeMode,
+    required this.createdAt,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1182,6 +1369,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['random_order'] = Variable<bool>(randomOrder);
     map['silent_mode'] = Variable<bool>(silentMode);
     map['theme_mode'] = Variable<int>(themeMode);
+    map['created_at'] = Variable<int>(createdAt);
+    map['updated_at'] = Variable<int>(updatedAt);
     return map;
   }
 
@@ -1194,6 +1383,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       randomOrder: Value(randomOrder),
       silentMode: Value(silentMode),
       themeMode: Value(themeMode),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -1210,6 +1401,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       randomOrder: serializer.fromJson<bool>(json['randomOrder']),
       silentMode: serializer.fromJson<bool>(json['silentMode']),
       themeMode: serializer.fromJson<int>(json['themeMode']),
+      createdAt: serializer.fromJson<int>(json['createdAt']),
+      updatedAt: serializer.fromJson<int>(json['updatedAt']),
     );
   }
   @override
@@ -1223,6 +1416,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'randomOrder': serializer.toJson<bool>(randomOrder),
       'silentMode': serializer.toJson<bool>(silentMode),
       'themeMode': serializer.toJson<int>(themeMode),
+      'createdAt': serializer.toJson<int>(createdAt),
+      'updatedAt': serializer.toJson<int>(updatedAt),
     };
   }
 
@@ -1234,6 +1429,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? randomOrder,
     bool? silentMode,
     int? themeMode,
+    int? createdAt,
+    int? updatedAt,
   }) => AppSetting(
     id: id ?? this.id,
     wordsPerDay: wordsPerDay ?? this.wordsPerDay,
@@ -1242,6 +1439,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     randomOrder: randomOrder ?? this.randomOrder,
     silentMode: silentMode ?? this.silentMode,
     themeMode: themeMode ?? this.themeMode,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -1258,6 +1457,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ? data.silentMode.value
           : this.silentMode,
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1270,7 +1471,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('loopCards: $loopCards, ')
           ..write('randomOrder: $randomOrder, ')
           ..write('silentMode: $silentMode, ')
-          ..write('themeMode: $themeMode')
+          ..write('themeMode: $themeMode, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1284,6 +1487,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     randomOrder,
     silentMode,
     themeMode,
+    createdAt,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1295,7 +1500,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.loopCards == this.loopCards &&
           other.randomOrder == this.randomOrder &&
           other.silentMode == this.silentMode &&
-          other.themeMode == this.themeMode);
+          other.themeMode == this.themeMode &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -1306,6 +1513,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> randomOrder;
   final Value<bool> silentMode;
   final Value<int> themeMode;
+  final Value<int> createdAt;
+  final Value<int> updatedAt;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.wordsPerDay = const Value.absent(),
@@ -1314,6 +1523,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.randomOrder = const Value.absent(),
     this.silentMode = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -1323,6 +1534,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.randomOrder = const Value.absent(),
     this.silentMode = const Value.absent(),
     this.themeMode = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -1332,6 +1545,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? randomOrder,
     Expression<bool>? silentMode,
     Expression<int>? themeMode,
+    Expression<int>? createdAt,
+    Expression<int>? updatedAt,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1341,6 +1556,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (randomOrder != null) 'random_order': randomOrder,
       if (silentMode != null) 'silent_mode': silentMode,
       if (themeMode != null) 'theme_mode': themeMode,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
 
@@ -1352,6 +1569,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? randomOrder,
     Value<bool>? silentMode,
     Value<int>? themeMode,
+    Value<int>? createdAt,
+    Value<int>? updatedAt,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -1361,6 +1580,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       randomOrder: randomOrder ?? this.randomOrder,
       silentMode: silentMode ?? this.silentMode,
       themeMode: themeMode ?? this.themeMode,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -1388,6 +1609,12 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (themeMode.present) {
       map['theme_mode'] = Variable<int>(themeMode.value);
     }
+    if (createdAt.present) {
+      map['created_at'] = Variable<int>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<int>(updatedAt.value);
+    }
     return map;
   }
 
@@ -1400,7 +1627,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('loopCards: $loopCards, ')
           ..write('randomOrder: $randomOrder, ')
           ..write('silentMode: $silentMode, ')
-          ..write('themeMode: $themeMode')
+          ..write('themeMode: $themeMode, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1428,7 +1657,9 @@ typedef $$FoldersTableCreateCompanionBuilder =
       required String id,
       required String name,
       Value<String?> parentId,
+      Value<int> createdAt,
       required int updatedAt,
+      Value<int> sortOrder,
       Value<bool> deleted,
       Value<int> rowid,
     });
@@ -1437,7 +1668,9 @@ typedef $$FoldersTableUpdateCompanionBuilder =
       Value<String> id,
       Value<String> name,
       Value<String?> parentId,
+      Value<int> createdAt,
       Value<int> updatedAt,
+      Value<int> sortOrder,
       Value<bool> deleted,
       Value<int> rowid,
     });
@@ -1466,8 +1699,18 @@ class $$FoldersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1501,8 +1744,18 @@ class $$FoldersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -1530,8 +1783,14 @@ class $$FoldersTableAnnotationComposer
   GeneratedColumn<String> get parentId =>
       $composableBuilder(column: $table.parentId, builder: (column) => column);
 
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
 
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
@@ -1568,14 +1827,18 @@ class $$FoldersTableTableManager
                 Value<String> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> parentId = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FoldersCompanion(
                 id: id,
                 name: name,
                 parentId: parentId,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
+                sortOrder: sortOrder,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -1584,14 +1847,18 @@ class $$FoldersTableTableManager
                 required String id,
                 required String name,
                 Value<String?> parentId = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
                 required int updatedAt,
+                Value<int> sortOrder = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FoldersCompanion.insert(
                 id: id,
                 name: name,
                 parentId: parentId,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
+                sortOrder: sortOrder,
                 deleted: deleted,
                 rowid: rowid,
               ),
@@ -1626,6 +1893,7 @@ typedef $$WordsTableCreateCompanionBuilder =
       Value<String?> audioFile,
       Value<bool> difficultMemorizing,
       Value<bool> difficultSpelling,
+      Value<int> createdAt,
       required int updatedAt,
       Value<bool> deleted,
       Value<int> rowid,
@@ -1639,6 +1907,7 @@ typedef $$WordsTableUpdateCompanionBuilder =
       Value<String?> audioFile,
       Value<bool> difficultMemorizing,
       Value<bool> difficultSpelling,
+      Value<int> createdAt,
       Value<int> updatedAt,
       Value<bool> deleted,
       Value<int> rowid,
@@ -1684,6 +1953,11 @@ class $$WordsTableFilterComposer extends Composer<_$AppDatabase, $WordsTable> {
 
   ColumnFilters<bool> get difficultSpelling => $composableBuilder(
     column: $table.difficultSpelling,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1742,6 +2016,11 @@ class $$WordsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -1789,6 +2068,9 @@ class $$WordsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 
@@ -1831,6 +2113,7 @@ class $$WordsTableTableManager
                 Value<String?> audioFile = const Value.absent(),
                 Value<bool> difficultMemorizing = const Value.absent(),
                 Value<bool> difficultSpelling = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1842,6 +2125,7 @@ class $$WordsTableTableManager
                 audioFile: audioFile,
                 difficultMemorizing: difficultMemorizing,
                 difficultSpelling: difficultSpelling,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
                 deleted: deleted,
                 rowid: rowid,
@@ -1855,6 +2139,7 @@ class $$WordsTableTableManager
                 Value<String?> audioFile = const Value.absent(),
                 Value<bool> difficultMemorizing = const Value.absent(),
                 Value<bool> difficultSpelling = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
                 required int updatedAt,
                 Value<bool> deleted = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -1866,6 +2151,7 @@ class $$WordsTableTableManager
                 audioFile: audioFile,
                 difficultMemorizing: difficultMemorizing,
                 difficultSpelling: difficultSpelling,
+                createdAt: createdAt,
                 updatedAt: updatedAt,
                 deleted: deleted,
                 rowid: rowid,
@@ -1901,6 +2187,8 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> randomOrder,
       Value<bool> silentMode,
       Value<int> themeMode,
+      Value<int> createdAt,
+      Value<int> updatedAt,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -1911,6 +2199,8 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> randomOrder,
       Value<bool> silentMode,
       Value<int> themeMode,
+      Value<int> createdAt,
+      Value<int> updatedAt,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -1954,6 +2244,16 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get themeMode => $composableBuilder(
     column: $table.themeMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2001,6 +2301,16 @@ class $$AppSettingsTableOrderingComposer
     column: $table.themeMode,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<int> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -2038,6 +2348,12 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get themeMode =>
       $composableBuilder(column: $table.themeMode, builder: (column) => column);
+
+  GeneratedColumn<int> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<int> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
 
 class $$AppSettingsTableTableManager
@@ -2078,6 +2394,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> randomOrder = const Value.absent(),
                 Value<bool> silentMode = const Value.absent(),
                 Value<int> themeMode = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 wordsPerDay: wordsPerDay,
@@ -2086,6 +2404,8 @@ class $$AppSettingsTableTableManager
                 randomOrder: randomOrder,
                 silentMode: silentMode,
                 themeMode: themeMode,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           createCompanionCallback:
               ({
@@ -2096,6 +2416,8 @@ class $$AppSettingsTableTableManager
                 Value<bool> randomOrder = const Value.absent(),
                 Value<bool> silentMode = const Value.absent(),
                 Value<int> themeMode = const Value.absent(),
+                Value<int> createdAt = const Value.absent(),
+                Value<int> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 wordsPerDay: wordsPerDay,
@@ -2104,6 +2426,8 @@ class $$AppSettingsTableTableManager
                 randomOrder: randomOrder,
                 silentMode: silentMode,
                 themeMode: themeMode,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
