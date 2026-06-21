@@ -44,7 +44,9 @@ dependencies:
   cupertino_icons: ^1.0.8
 
   file_picker: ^10.3.2
-  audioplayers: ^6.5.1
+  # audioplayers: ^6.5.1
+  audioplayers: ^6.7.1
+  # audioplayers: ^7.0.0
   record: ^6.0.0
   just_waveform: ^0.0.7
   ffmpeg_kit_flutter_new: ^3.0.0
