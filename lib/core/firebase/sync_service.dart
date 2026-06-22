@@ -122,12 +122,39 @@ class SyncService {
 
     //////////////////////////////////////////
 
+    // final wordsCloud = await firestore.getWords();
+
+    // print("Words ${wordsCloud.length}");
+
+    // for (final dto in wordsCloud) {
+    //   await words.upsertWord(dto.toCompanion());
+    // }
+
     final wordsCloud = await firestore.getWords();
 
-    print("Words ${wordsCloud.length}");
+    print("WORDS FROM CLOUD: ${wordsCloud.length}");
 
     for (final dto in wordsCloud) {
-      await words.upsertWord(dto.toCompanion());
+      try {
+        print("ID: ${dto.id}");
+        print("WORD: ${dto.word}");
+        print("FOLDER: ${dto.folderId}");
+
+        await words.upsertWord(dto.toCompanion());
+
+        // print("INSERTED ${dto.word}");
+      } catch (e) {
+        print("ERROR");
+        print(e);
+      }
+    }
+
+    final localWords = await words.getAllWords();
+
+    print("LOCAL WORDS ${localWords.length}");
+
+    for (final w in localWords) {
+      print("${w.id}  ${w.word}");
     }
 
     //////////////////////////////////////////
