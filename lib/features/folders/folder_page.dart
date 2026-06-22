@@ -127,12 +127,23 @@ class _FolderPageState extends State<FolderPage> {
               return IconButton(
                 icon: Icon(user == null ? Icons.cloud_off : Icons.cloud_sync),
 
-                onPressed: () {
-                  Navigator.push(
+                // onPressed: () {
+                //   Navigator.push(
+                //     context,
+
+                //     MaterialPageRoute(builder: (_) => const AccountPage()),
+                //   );
+                // },
+                onPressed: () async {
+                  final updated = await Navigator.push<bool>(
                     context,
 
                     MaterialPageRoute(builder: (_) => const AccountPage()),
                   );
+
+                  if (updated == true) {
+                    await loadData();
+                  }
                 },
               );
             },

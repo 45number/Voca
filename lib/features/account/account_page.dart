@@ -272,7 +272,12 @@ class _AccountPageState extends State<AccountPage> {
 
         FilledButton(
           onPressed: () async {
+            // await syncService.downloadEverything();
             await syncService.downloadEverything();
+
+            if (context.mounted) {
+              Navigator.pop(context, true);
+            }
           },
 
           child: const Text("Download"),
