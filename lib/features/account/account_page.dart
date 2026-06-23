@@ -47,6 +47,8 @@ class _AccountPageState extends State<AccountPage> {
         password: passwordController.text,
       );
 
+      await syncService.start();
+
       if (mounted) {
         setState(() {});
       }
@@ -73,6 +75,8 @@ class _AccountPageState extends State<AccountPage> {
         email: emailController.text.trim(),
         password: passwordController.text,
       );
+
+      await syncService.start();
 
       if (mounted) {
         setState(() {});
@@ -113,6 +117,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> logout() async {
+    await syncService.dispose();
     await auth.logout();
 
     if (mounted) {
@@ -255,7 +260,7 @@ class _AccountPageState extends State<AccountPage> {
 
           child: FilledButton(
             onPressed: () async {
-              await syncService.uploadEverything();
+              // await syncService.uploadEverything();
 
               print("Upload completed");
 
@@ -273,7 +278,7 @@ class _AccountPageState extends State<AccountPage> {
         FilledButton(
           onPressed: () async {
             // await syncService.downloadEverything();
-            await syncService.downloadEverything();
+            // await syncService.downloadEverything();
 
             if (context.mounted) {
               Navigator.pop(context, true);

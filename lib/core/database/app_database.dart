@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,20 @@ class AppDatabase extends _$AppDatabase {
         await m.addColumn(
           appSettings,
           appSettings.updatedAt as GeneratedColumn<Object>,
+        );
+      }
+
+      if (from < 6) {
+        await m.addColumn(
+          folders,
+          folders.pendingSync as GeneratedColumn<Object>,
+        );
+
+        await m.addColumn(words, words.pendingSync as GeneratedColumn<Object>);
+
+        await m.addColumn(
+          appSettings,
+          appSettings.pendingSync as GeneratedColumn<Object>,
         );
       }
     },

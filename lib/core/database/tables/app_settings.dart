@@ -20,7 +20,10 @@ class AppSettings extends Table {
 
   IntColumn get createdAt => integer().withDefault(const Constant(0))();
 
-  IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+  // IntColumn get updatedAt => integer().withDefault(const Constant(0))();
+  IntColumn get updatedAt => integer().withDefault(Constant(0))();
+
+  BoolColumn get pendingSync => boolean().withDefault(Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};

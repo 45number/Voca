@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../firebase/dto/folder_dto.dart';
 import 'app_database.dart';
 
 class FolderRepository {
@@ -53,16 +54,13 @@ class FolderRepository {
           // ),
           FoldersCompanion.insert(
             id: now.toString(),
-
             name: name,
-
             parentId: Value(parentId),
-
             createdAt: Value(now),
-
             updatedAt: now,
-
             sortOrder: const Value(0),
+
+            pendingSync: const Value(true),
           ),
         );
   }
@@ -74,6 +72,7 @@ class FolderRepository {
       FoldersCompanion(
         name: Value(newName),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        pendingSync: const Value(true),
       ),
     );
   }
@@ -85,6 +84,7 @@ class FolderRepository {
       FoldersCompanion(
         parentId: Value(parentId),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        pendingSync: const Value(true),
       ),
     );
   }
@@ -96,6 +96,7 @@ class FolderRepository {
       FoldersCompanion(
         deleted: const Value(true),
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        pendingSync: const Value(true),
       ),
     );
   }
@@ -208,5 +209,112 @@ class FolderRepository {
     return (database.select(
       database.folders,
     )..where((f) => f.deleted.equals(false))).watch();
+  }
+
+  ///////////////////
+
+  // Future<List<Folder>> getDirtyFolders() {
+  //   return (database.select(
+  //     database.folders,
+  //   )..where((f) => f.pendingSync.equals(true))).get();
+  // }
+
+  // Future<void> markFolderSynced(String id) async {
+  //   await (database.update(database.folders)..where((f) => f.id.equals(id)))
+  //       .write(const FoldersCompanion(pendingSync: Value(false)));
+  // }
+
+  // Future<void> upsertIfNewer(FoldersCompanion folder) async {
+  //   if (!folder.id.present || !folder.updatedAt.present) {
+  //     return;
+  //   }
+
+  //   final id = folder.id.value;
+
+  //   final local = await getFolder(id);
+
+  //   if (local == null) {
+  //     await upsertFolder(folder);
+  //     return;
+  //   }
+
+  //   final remoteUpdated = folder.updatedAt.value;
+
+  //   if (remoteUpdated > local.updatedAt) {
+  //     await upsertFolder(folder.copyWith(pendingSync: const Value(false)));
+  //   }
+  // }
+
+  /////////////
+
+  Future<List<Folder>> getDirtyFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.pendingSync.equals(true))).get();
+  }
+
+  Future<void> markFolderSynced(String id) async {
+    await (database.update(database.folders)..where((f) => f.id.equals(id)))
+        .write(const FoldersCompanion(pendingSync: Value(false)));
+  }
+
+  Future<void> applyRemoteDelete(String id) async {
+    await (database.update(
+      database.folders,
+    )..where((f) => f.id.equals(id))).write(
+      FoldersCompanion(
+        deleted: const Value(true),
+
+        pendingSync: const Value(false),
+      ),
+    );
+  }
+
+  Future<void> upsertIfNewer(FolderDto dto) async {
+    final local = await getFolder(dto.id);
+
+    ////////////////////////
+    /// local absent
+    ////////////////////////
+
+    if (local == null) {
+      await upsertFolder(
+        dto.toCompanion().copyWith(pendingSync: const Value(false)),
+      );
+
+      return;
+    }
+
+    ////////////////////////
+    /// local newer
+    ////////////////////////
+
+    if (dto.updatedAt <= local.updatedAt) {
+      return;
+    }
+
+    ////////////////////////
+    /// remote delete
+    ////////////////////////
+
+    if (dto.deleted) {
+      await applyRemoteDelete(dto.id);
+
+      return;
+    }
+
+    ////////////////////////
+    /// remote newer
+    ////////////////////////
+
+    await upsertFolder(
+      dto.toCompanion().copyWith(pendingSync: const Value(false)),
+    );
+  }
+
+  Stream<int> watchDirtyFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.pendingSync.equals(true))).watch().map((e) => e.length);
   }
 }

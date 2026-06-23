@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 
+import '../firebase/dto/word_dto.dart';
 import 'app_database.dart';
 
 class WordRepository {
@@ -79,6 +80,8 @@ class WordRepository {
             createdAt: Value(_now),
 
             updatedAt: _now,
+
+            pendingSync: const Value(true),
           ),
         );
   }
@@ -100,6 +103,8 @@ class WordRepository {
         audioFile: Value(audioFile),
 
         updatedAt: Value(_now),
+
+        pendingSync: const Value(true),
       ),
     );
   }
@@ -108,7 +113,11 @@ class WordRepository {
     await (database.update(
       database.words,
     )..where((w) => w.id.equals(wordId))).write(
-      WordsCompanion(difficultMemorizing: Value(value), updatedAt: Value(_now)),
+      WordsCompanion(
+        difficultMemorizing: Value(value),
+        updatedAt: Value(_now),
+        pendingSync: const Value(true),
+      ),
     );
   }
 
@@ -116,7 +125,11 @@ class WordRepository {
     await (database.update(
       database.words,
     )..where((w) => w.id.equals(wordId))).write(
-      WordsCompanion(difficultSpelling: Value(value), updatedAt: Value(_now)),
+      WordsCompanion(
+        difficultSpelling: Value(value),
+        updatedAt: Value(_now),
+        pendingSync: const Value(true),
+      ),
     );
   }
 
@@ -124,7 +137,11 @@ class WordRepository {
     await (database.update(
       database.words,
     )..where((w) => w.id.equals(wordId))).write(
-      WordsCompanion(deleted: const Value(true), updatedAt: Value(_now)),
+      WordsCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(_now),
+        pendingSync: const Value(true),
+      ),
     );
   }
 
@@ -132,7 +149,11 @@ class WordRepository {
     await (database.update(
       database.words,
     )..where((w) => w.folderId.equals(folderId))).write(
-      WordsCompanion(deleted: const Value(true), updatedAt: Value(_now)),
+      WordsCompanion(
+        deleted: const Value(true),
+        updatedAt: Value(_now),
+        pendingSync: const Value(true),
+      ),
     );
   }
 
@@ -253,5 +274,86 @@ class WordRepository {
     });
 
     return query.watch().map((e) => e.length);
+  }
+
+  Stream<List<Word>> watchAllWords() {
+    return (database.select(
+      database.words,
+    )..where((w) => w.deleted.equals(false))).watch();
+  }
+
+  ////////////////////
+
+  Future<Word?> getWord(String id) {
+    return (database.select(
+      database.words,
+    )..where((w) => w.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<List<Word>> getDirtyWords() {
+    return (database.select(
+      database.words,
+    )..where((w) => w.pendingSync.equals(true))).get();
+  }
+
+  Future<void> markWordSynced(String id) async {
+    await (database.update(database.words)..where((w) => w.id.equals(id)))
+        .write(const WordsCompanion(pendingSync: Value(false)));
+  }
+
+  Future<void> applyRemoteDelete(String id) async {
+    await (database.update(
+      database.words,
+    )..where((w) => w.id.equals(id))).write(
+      const WordsCompanion(deleted: Value(true), pendingSync: Value(false)),
+    );
+  }
+
+  Future<void> upsertIfNewer(WordDto dto) async {
+    final local = await getWord(dto.id);
+
+    ///////////////////////////////////////
+    /// local absent
+    ///////////////////////////////////////
+
+    if (local == null) {
+      await upsertWord(
+        dto.toCompanion().copyWith(pendingSync: const Value(false)),
+      );
+
+      return;
+    }
+
+    ///////////////////////////////////////
+    /// local newer
+    ///////////////////////////////////////
+
+    if (dto.updatedAt <= local.updatedAt) {
+      return;
+    }
+
+    ///////////////////////////////////////
+    /// remote delete
+    ///////////////////////////////////////
+
+    if (dto.deleted) {
+      await applyRemoteDelete(dto.id);
+
+      return;
+    }
+
+    ///////////////////////////////////////
+    /// remote newer
+    ///////////////////////////////////////
+
+    await upsertWord(
+      dto.toCompanion().copyWith(pendingSync: const Value(false)),
+    );
+  }
+
+  Stream<int> watchDirtyWords() {
+    return (database.select(
+      database.words,
+    )..where((w) => w.pendingSync.equals(true))).watch().map((e) => e.length);
   }
 }

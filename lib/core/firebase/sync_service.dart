@@ -1,364 +1,3 @@
-// // import '../database/folder_repository.dart';
-// // import '../database/settings_repository.dart';
-// // import '../database/word_repository.dart';
-
-// // import 'dto/folder_dto.dart';
-// // import 'dto/settings_dto.dart';
-// // import 'dto/word_dto.dart';
-
-// // import 'firestore_service.dart';
-
-// // class SyncService {
-// //   final FolderRepository folders;
-
-// //   final WordRepository words;
-
-// //   final SettingsRepository settings;
-
-// //   final FirestoreService firestore;
-
-// //   SyncService({
-// //     required this.folders,
-
-// //     required this.words,
-
-// //     required this.settings,
-
-// //     required this.firestore,
-// //   });
-
-// //   // Future<void> uploadEverything() async {
-// //   //   ///////////////////////////////////
-// //   //   /// folders
-// //   //   ///////////////////////////////////
-
-// //   //   final localFolders = await folders.getAllFolders();
-
-// //   //   for (final folder in localFolders) {
-// //   //     final dto = FolderDto.fromFolder(folder);
-
-// //   //     await firestore.uploadFolder(dto);
-// //   //   }
-
-// //   //   ///////////////////////////////////
-// //   //   /// words
-// //   //   ///////////////////////////////////
-
-// //   //   final localWords = await words.getAllWords();
-
-// //   //   for (final word in localWords) {
-// //   //     final dto = WordDto.fromWord(word);
-
-// //   //     await firestore.uploadWord(dto);
-// //   //   }
-
-// //   //   ///////////////////////////////////
-// //   //   /// settings
-// //   //   ///////////////////////////////////
-
-// //   //   final s = await settings.getSettings();
-
-// //   //   final dto = SettingsDto.fromSettings(s);
-
-// //   //   await firestore.uploadSettings(dto);
-// //   // }
-
-// //   Future<void> uploadEverything() async {
-// //     print("====== START SYNC ======");
-
-// //     final localFolders = await folders.getAllFolders();
-
-// //     print("Folders count: ${localFolders.length}");
-
-// //     for (final folder in localFolders) {
-// //       print("Uploading folder: ${folder.name}");
-
-// //       final dto = FolderDto.fromFolder(folder);
-
-// //       await firestore.uploadFolder(dto);
-// //     }
-
-// //     final localWords = await words.getAllWords();
-
-// //     print("Words count: ${localWords.length}");
-
-// //     for (final word in localWords) {
-// //       print("Uploading word: ${word.word}");
-
-// //       final dto = WordDto.fromWord(word);
-
-// //       await firestore.uploadWord(dto);
-// //     }
-
-// //     final s = await settings.getSettings();
-
-// //     print("Uploading settings");
-
-// //     await firestore.uploadSettings(SettingsDto.fromSettings(s));
-
-// //     print("====== END SYNC ======");
-// //   }
-
-// //   Future<void> downloadEverything() async {
-// //     print("DOWNLOAD START");
-
-// //     //////////////////////////////////////////
-
-// //     /// folders
-
-// //     //////////////////////////////////////////
-
-// //     final foldersCloud = await firestore.getFolders();
-
-// //     print("Folders ${foldersCloud.length}");
-
-// //     for (final dto in foldersCloud) {
-// //       await folders.upsertFolder(dto.toCompanion());
-// //     }
-
-// //     //////////////////////////////////////////
-
-// //     /// words
-
-// //     //////////////////////////////////////////
-
-// //     // final wordsCloud = await firestore.getWords();
-
-// //     // print("Words ${wordsCloud.length}");
-
-// //     // for (final dto in wordsCloud) {
-// //     //   await words.upsertWord(dto.toCompanion());
-// //     // }
-
-// //     final wordsCloud = await firestore.getWords();
-
-// //     print("WORDS FROM CLOUD: ${wordsCloud.length}");
-
-// //     for (final dto in wordsCloud) {
-// //       try {
-// //         print("ID: ${dto.id}");
-// //         print("WORD: ${dto.word}");
-// //         print("FOLDER: ${dto.folderId}");
-
-// //         await words.upsertWord(dto.toCompanion());
-
-// //         // print("INSERTED ${dto.word}");
-// //       } catch (e) {
-// //         print("ERROR");
-// //         print(e);
-// //       }
-// //     }
-
-// //     final localWords = await words.getAllWords();
-
-// //     print("LOCAL WORDS ${localWords.length}");
-
-// //     for (final w in localWords) {
-// //       print("${w.id}  ${w.word}");
-// //     }
-
-// //     //////////////////////////////////////////
-
-// //     /// settings
-
-// //     //////////////////////////////////////////
-
-// //     final settingsCloud = await firestore.getSettings();
-
-// //     if (settingsCloud != null) {
-// //       await settings.upsertSettings(settingsCloud.toCompanion());
-// //     }
-
-// //     print("DOWNLOAD END");
-// //   }
-// // }
-
-// import 'dart:async';
-
-// import '../database/folder_repository.dart';
-// import '../database/settings_repository.dart';
-// import '../database/word_repository.dart';
-
-// import 'dto/folder_dto.dart';
-// import 'dto/settings_dto.dart';
-// import 'dto/word_dto.dart';
-
-// import 'firestore_service.dart';
-
-// // import 'package:flutter/foundation.dart';
-
-// class SyncService {
-//   final FolderRepository folders;
-//   final WordRepository words;
-//   final SettingsRepository settings;
-//   final FirestoreService firestore;
-
-//   StreamSubscription? _foldersSub;
-//   StreamSubscription? _wordsSub;
-//   StreamSubscription? _settingsSub;
-
-//   SyncService({
-//     required this.folders,
-
-//     required this.words,
-
-//     required this.settings,
-
-//     required this.firestore,
-//   });
-
-//   ////////////////////////////////////////////////////////
-//   ///
-//   /// Upload
-//   ///
-//   ////////////////////////////////////////////////////////
-
-//   Future<void> uploadEverything() async {
-//     final localFolders = await folders.getAllFolders();
-
-//     for (final folder in localFolders) {
-//       final dto = FolderDto.fromFolder(folder);
-
-//       await firestore.uploadFolder(dto);
-//     }
-
-//     final localWords = await words.getAllWords();
-
-//     for (final word in localWords) {
-//       final dto = WordDto.fromWord(word);
-
-//       await firestore.uploadWord(dto);
-//     }
-
-//     final s = await settings.getSettings();
-
-//     final dto = SettingsDto.fromSettings(s);
-
-//     await firestore.uploadSettings(dto);
-//   }
-
-//   ////////////////////////////////////////////////////////
-//   ///
-//   /// Download
-//   ///
-//   ////////////////////////////////////////////////////////
-
-//   Future<void> downloadEverything() async {
-//     ///////////////////////////
-//     ///
-//     /// folders
-//     ///
-//     ///////////////////////////
-
-//     final foldersCloud = await firestore.getFolders();
-
-//     for (final dto in foldersCloud) {
-//       await folders.upsertFolder(dto.toCompanion());
-//     }
-
-//     ///////////////////////////
-//     ///
-//     /// words
-//     ///
-//     ///////////////////////////
-
-//     final wordsCloud = await firestore.getWords();
-
-//     for (final dto in wordsCloud) {
-//       await words.upsertWord(dto.toCompanion());
-//     }
-
-//     ///////////////////////////
-//     ///
-//     /// settings
-//     ///
-//     ///////////////////////////
-
-//     final settingsCloud = await firestore.getSettings();
-
-//     if (settingsCloud != null) {
-//       await settings.upsertSettings(settingsCloud.toCompanion());
-//     }
-//   }
-
-//   ////////////////////////////////////////////////////////
-//   ///
-//   /// Realtime
-//   ///
-//   ////////////////////////////////////////////////////////
-
-//   // Future<void> startRealtime() async {
-//   // Future<void> startRealtime({VoidCallback? onChanged}) async {
-//   //   await stopRealtime();
-
-//   //   /////////////////////////////////////
-
-//   //   /// folders
-
-//   //   /////////////////////////////////////
-
-//   //   _foldersSub = firestore.listenFolders().listen((snapshot) async {
-//   //     for (final doc in snapshot.docs) {
-//   //       final dto = FolderDto.fromJson(doc.data());
-
-//   //       await folders.upsertFolder(dto.toCompanion());
-
-//   //       onChanged?.call();
-//   //     }
-//   //   });
-
-//   //   /////////////////////////////////////
-
-//   //   /// words
-
-//   //   /////////////////////////////////////
-
-//   //   _wordsSub = firestore.listenWords().listen((snapshot) async {
-//   //     for (final doc in snapshot.docs) {
-//   //       final dto = WordDto.fromJson(doc.data());
-
-//   //       await words.upsertWord(dto.toCompanion());
-
-//   //       onChanged?.call();
-//   //     }
-//   //   });
-
-//   //   /////////////////////////////////////
-
-//   //   /// settings
-
-//   //   /////////////////////////////////////
-
-//   //   _settingsSub = firestore.listenSettings().listen((doc) async {
-//   //     if (!doc.exists) {
-//   //       return;
-//   //     }
-
-//   //     final dto = SettingsDto.fromJson(doc.data()!);
-
-//   //     await settings.upsertSettings(dto.toCompanion());
-//   //   });
-//   // }
-
-//   ////////////////////////////////////////////////////////
-//   ///
-//   /// Stop
-//   ///
-//   ////////////////////////////////////////////////////////
-
-//   // Future<void> stopRealtime() async {
-//   //   await _foldersSub?.cancel();
-
-//   //   await _wordsSub?.cancel();
-
-//   //   await _settingsSub?.cancel();
-
-//   //   _foldersSub = null;
-//   //   _wordsSub = null;
-//   //   _settingsSub = null;
-//   // }
-// }
-
 import 'dart:async';
 
 import '../database/folder_repository.dart';
@@ -377,9 +16,24 @@ class SyncService {
   final SettingsRepository settings;
   final FirestoreService firestore;
 
-  StreamSubscription? _foldersSub;
-  StreamSubscription? _wordsSub;
-  StreamSubscription? _settingsSub;
+  // StreamSubscription? _foldersSub;
+  // StreamSubscription? _wordsSub;
+  // StreamSubscription? _settingsSub;
+  StreamSubscription? _foldersRealtimeSub;
+  StreamSubscription? _wordsRealtimeSub;
+  StreamSubscription? _settingsRealtimeSub;
+
+  StreamSubscription? _dirtyFoldersSub;
+  StreamSubscription? _dirtyWordsSub;
+  StreamSubscription? _dirtySettingsSub;
+
+  Timer? _debounce;
+
+  bool _uploading = false;
+
+  int _lastFolders = 0;
+  int _lastWords = 0;
+  int _lastSettings = 0;
 
   SyncService({
     required this.folders,
@@ -388,158 +42,213 @@ class SyncService {
     required this.firestore,
   });
 
-  ////////////////////////////////////////////////////////
-  ///
-  /// Upload
-  ///
-  ////////////////////////////////////////////////////////
+  // Future<void> start() async {
+  //   await stopRealtime();
 
-  Future<void> uploadEverything() async {
-    final localFolders = await folders.getAllFolders();
+  //   await observeDirty();
 
-    for (final folder in localFolders) {
-      final dto = FolderDto.fromFolder(folder);
-      await firestore.uploadFolder(dto);
-    }
+  //   await startRealtime();
 
-    final localWords = await words.getAllWords();
+  //   await uploadDirty();
+  // }
+  Future<void> start() async {
+    await dispose();
 
-    for (final word in localWords) {
-      final dto = WordDto.fromWord(word);
-      await firestore.uploadWord(dto);
-    }
+    await observeDirty();
 
-    final s = await settings.getSettings();
+    await startRealtime();
 
-    final dto = SettingsDto.fromSettings(s);
-
-    await firestore.uploadSettings(dto);
+    await uploadDirty();
   }
-
-  ////////////////////////////////////////////////////////
-  ///
-  /// Download
-  ///
-  ////////////////////////////////////////////////////////
-
-  Future<void> downloadEverything() async {
-    ///////////////////////////
-    /// folders
-    ///////////////////////////
-
-    final foldersCloud = await firestore.getFolders();
-
-    for (final dto in foldersCloud) {
-      await folders.upsertFolder(dto.toCompanion());
-    }
-
-    ///////////////////////////
-    /// words
-    ///////////////////////////
-
-    final wordsCloud = await firestore.getWords();
-
-    for (final dto in wordsCloud) {
-      await words.upsertWord(dto.toCompanion());
-    }
-
-    ///////////////////////////
-    /// settings
-    ///////////////////////////
-
-    final settingsCloud = await firestore.getSettings();
-
-    if (settingsCloud != null) {
-      await settings.upsertSettings(settingsCloud.toCompanion());
-    }
-  }
-
-  ////////////////////////////////////////////////////////
-  ///
-  /// Realtime
-  ///
-  ////////////////////////////////////////////////////////
 
   Future<void> startRealtime() async {
     await stopRealtime();
 
-    /////////////////////////////////////
-    /// folders
-    /////////////////////////////////////
+    //////////////////////////////////////////
+    /// Folders
+    //////////////////////////////////////////
 
-    _foldersSub = firestore.listenFolders().listen(
-      (snapshot) async {
-        for (final change in snapshot.docChanges) {
-          final data = change.doc.data();
+    _foldersRealtimeSub = firestore.listenFolders().listen((snapshot) async {
+      for (final change in snapshot.docChanges) {
+        final data = change.doc.data();
 
-          if (data == null) continue;
+        if (data == null) continue;
 
-          final dto = FolderDto.fromJson(data);
+        final dto = FolderDto.fromJson(data);
 
-          await folders.upsertFolder(dto.toCompanion());
-        }
-      },
-      onError: (e) {
-        print('Folders listener error: $e');
-      },
-    );
+        await folders.upsertIfNewer(dto);
+      }
+    });
 
-    /////////////////////////////////////
-    /// words
-    /////////////////////////////////////
+    //////////////////////////////////////////
+    /// Words
+    //////////////////////////////////////////
 
-    _wordsSub = firestore.listenWords().listen(
-      (snapshot) async {
-        for (final change in snapshot.docChanges) {
-          final data = change.doc.data();
+    _wordsRealtimeSub = firestore.listenWords().listen((snapshot) async {
+      for (final change in snapshot.docChanges) {
+        final data = change.doc.data();
 
-          if (data == null) continue;
+        if (data == null) continue;
 
-          final dto = WordDto.fromJson(data);
+        final dto = WordDto.fromJson(data);
 
-          await words.upsertWord(dto.toCompanion());
-        }
-      },
-      onError: (e) {
-        print('Words listener error: $e');
-      },
-    );
+        await words.upsertIfNewer(dto);
+      }
+    });
 
-    /////////////////////////////////////
-    /// settings
-    /////////////////////////////////////
+    //////////////////////////////////////////
+    /// Settings
+    //////////////////////////////////////////
 
-    _settingsSub = firestore.listenSettings().listen(
-      (doc) async {
-        if (!doc.exists) return;
+    _settingsRealtimeSub = firestore.listenSettings().listen((doc) async {
+      if (!doc.exists) {
+        return;
+      }
 
-        final data = doc.data();
+      final data = doc.data();
 
-        if (data == null) return;
+      if (data == null) {
+        return;
+      }
 
-        final dto = SettingsDto.fromJson(data);
+      final dto = SettingsDto.fromJson(data);
 
-        await settings.upsertSettings(dto.toCompanion());
-      },
-      onError: (e) {
-        print('Settings listener error: $e');
-      },
-    );
+      await settings.upsertIfNewer(dto);
+    });
   }
 
-  ////////////////////////////////////////////////////////
-  ///
-  /// Stop
-  ///
-  ////////////////////////////////////////////////////////
+  Future<void> observeDirty() async {
+    await _dirtyFoldersSub?.cancel();
+    await _dirtyWordsSub?.cancel();
+    await _dirtySettingsSub?.cancel();
+
+    //////////////////////////////
+
+    _dirtyFoldersSub = folders.watchDirtyFolders().listen((count) {
+      if (count > _lastFolders) {
+        notifyDirty();
+      }
+
+      _lastFolders = count;
+    });
+
+    //////////////////////////////
+
+    _dirtyWordsSub = words.watchDirtyWords().listen((count) {
+      if (count > _lastWords) {
+        notifyDirty();
+      }
+
+      _lastWords = count;
+    });
+
+    //////////////////////////////
+
+    _dirtySettingsSub = settings.watchDirtySettings().listen((count) {
+      if (count > _lastSettings) {
+        notifyDirty();
+      }
+
+      _lastSettings = count;
+    });
+  }
+
+  void notifyDirty() {
+    _debounce?.cancel();
+
+    _debounce = Timer(const Duration(seconds: 2), () async {
+      if (_uploading) {
+        return;
+      }
+
+      _uploading = true;
+
+      try {
+        await uploadDirty();
+      } finally {
+        _uploading = false;
+      }
+    });
+  }
+
+  Future<void> uploadDirty() async {
+    await Future.wait([
+      uploadDirtyFolders(),
+      uploadDirtyWords(),
+      uploadDirtySettings(),
+    ]);
+  }
+
+  Future<void> uploadDirtyFolders() async {
+    final dirty = await folders.getDirtyFolders();
+
+    for (final folder in dirty) {
+      try {
+        final dto = FolderDto.fromFolder(folder);
+
+        await firestore.uploadFolder(dto);
+
+        await folders.markFolderSynced(folder.id);
+      } catch (e) {
+        print(e);
+      }
+    }
+  }
+
+  Future<void> uploadDirtyWords() async {
+    final dirty = await words.getDirtyWords();
+
+    for (final word in dirty) {
+      try {
+        final dto = WordDto.fromWord(word);
+
+        await firestore.uploadWord(dto);
+
+        await words.markWordSynced(word.id);
+      } catch (e) {
+        print(e);
+      }
+    }
+  }
+
+  Future<void> uploadDirtySettings() async {
+    final s = await settings.getDirtySettings();
+
+    if (s == null) {
+      return;
+    }
+
+    try {
+      await firestore.uploadSettings(SettingsDto.fromSettings(s));
+
+      await settings.markSettingsSynced();
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  Future<void> dispose() async {
+    await stopRealtime();
+
+    await _dirtyFoldersSub?.cancel();
+    await _dirtyWordsSub?.cancel();
+    await _dirtySettingsSub?.cancel();
+
+    _dirtyFoldersSub = null;
+    _dirtyWordsSub = null;
+    _dirtySettingsSub = null;
+
+    _debounce?.cancel();
+    _debounce = null;
+  }
 
   Future<void> stopRealtime() async {
-    await _foldersSub?.cancel();
-    await _wordsSub?.cancel();
-    await _settingsSub?.cancel();
+    await _foldersRealtimeSub?.cancel();
+    await _wordsRealtimeSub?.cancel();
+    await _settingsRealtimeSub?.cancel();
 
-    _foldersSub = null;
-    _wordsSub = null;
-    _settingsSub = null;
+    _foldersRealtimeSub = null;
+    _wordsRealtimeSub = null;
+    _settingsRealtimeSub = null;
   }
 }

@@ -26,7 +26,7 @@ import 'firebase_options.dart';
 // import 'package:path/path.dart' as p;
 
 Future<void> main() async {
-  print("1");
+  // print("1");
   WidgetsFlutterBinding.ensureInitialized();
 
   // await Firebase.initializeApp();
@@ -56,7 +56,7 @@ Future<void> main() async {
   //     options: DefaultFirebaseOptions.currentPlatform,
   //   );
   // }
-  print("2");
+
   // try {
   //   Firebase.app();
   // } catch (_) {
@@ -73,42 +73,26 @@ Future<void> main() async {
     await Firebase.initializeApp();
   }
 
-  print("3");
   // Database
   database = AppDatabase();
-  print("4");
   // Repositories
   folderRepository = FolderRepository(database);
-  print("5");
   wordRepository = WordRepository(database);
-  print("6");
   settingsRepository = SettingsRepository(database);
-  print("7");
-
   syncService = SyncService(
     folders: folderRepository,
-
     words: wordRepository,
-
     settings: settingsRepository,
-
     firestore: FirestoreService(),
   );
 
-  print("8");
-
   // Theme
   final settings = await settingsRepository.getSettings();
-
-  print("9");
-
   themeController.setFromDatabase(settings.themeMode);
 
-  print("10");
+  // await syncService.start();
 
   runApp(const VocaApp());
-
-  print("11");
 }
 
 class VocaApp extends StatelessWidget {

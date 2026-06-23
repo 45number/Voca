@@ -748,6 +748,7 @@ class _FolderPageState extends State<FolderPage> {
                   sortOrder: 0,
 
                   deleted: false,
+                  pendingSync: false,
                 ),
             deck: const DeckInfo(index: 1, wordCount: 0),
             customBreadcrumb: breadcrumb,

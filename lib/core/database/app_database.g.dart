@@ -85,7 +85,22 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'CHECK ("deleted" IN (0, 1))',
     ),
-    defaultValue: const Constant(false),
+    defaultValue: Constant(false),
+  );
+  static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
+    'pendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingSync = GeneratedColumn<bool>(
+    'pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_sync" IN (0, 1))',
+    ),
+    defaultValue: Constant(true),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -96,6 +111,7 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
     updatedAt,
     sortOrder,
     deleted,
+    pendingSync,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -154,6 +170,15 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
         deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
       );
     }
+    if (data.containsKey('pending_sync')) {
+      context.handle(
+        _pendingSyncMeta,
+        pendingSync.isAcceptableOrUnknown(
+          data['pending_sync']!,
+          _pendingSyncMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -191,6 +216,10 @@ class $FoldersTable extends Folders with TableInfo<$FoldersTable, Folder> {
         DriftSqlType.bool,
         data['${effectivePrefix}deleted'],
       )!,
+      pendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_sync'],
+      )!,
     );
   }
 
@@ -208,6 +237,7 @@ class Folder extends DataClass implements Insertable<Folder> {
   final int updatedAt;
   final int sortOrder;
   final bool deleted;
+  final bool pendingSync;
   const Folder({
     required this.id,
     required this.name,
@@ -216,6 +246,7 @@ class Folder extends DataClass implements Insertable<Folder> {
     required this.updatedAt,
     required this.sortOrder,
     required this.deleted,
+    required this.pendingSync,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -229,6 +260,7 @@ class Folder extends DataClass implements Insertable<Folder> {
     map['updated_at'] = Variable<int>(updatedAt);
     map['sort_order'] = Variable<int>(sortOrder);
     map['deleted'] = Variable<bool>(deleted);
+    map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
   }
 
@@ -243,6 +275,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       updatedAt: Value(updatedAt),
       sortOrder: Value(sortOrder),
       deleted: Value(deleted),
+      pendingSync: Value(pendingSync),
     );
   }
 
@@ -259,6 +292,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       sortOrder: serializer.fromJson<int>(json['sortOrder']),
       deleted: serializer.fromJson<bool>(json['deleted']),
+      pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
   }
   @override
@@ -272,6 +306,7 @@ class Folder extends DataClass implements Insertable<Folder> {
       'updatedAt': serializer.toJson<int>(updatedAt),
       'sortOrder': serializer.toJson<int>(sortOrder),
       'deleted': serializer.toJson<bool>(deleted),
+      'pendingSync': serializer.toJson<bool>(pendingSync),
     };
   }
 
@@ -283,6 +318,7 @@ class Folder extends DataClass implements Insertable<Folder> {
     int? updatedAt,
     int? sortOrder,
     bool? deleted,
+    bool? pendingSync,
   }) => Folder(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -291,6 +327,7 @@ class Folder extends DataClass implements Insertable<Folder> {
     updatedAt: updatedAt ?? this.updatedAt,
     sortOrder: sortOrder ?? this.sortOrder,
     deleted: deleted ?? this.deleted,
+    pendingSync: pendingSync ?? this.pendingSync,
   );
   Folder copyWithCompanion(FoldersCompanion data) {
     return Folder(
@@ -301,6 +338,9 @@ class Folder extends DataClass implements Insertable<Folder> {
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      pendingSync: data.pendingSync.present
+          ? data.pendingSync.value
+          : this.pendingSync,
     );
   }
 
@@ -313,14 +353,23 @@ class Folder extends DataClass implements Insertable<Folder> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('sortOrder: $sortOrder, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, parentId, createdAt, updatedAt, sortOrder, deleted);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    parentId,
+    createdAt,
+    updatedAt,
+    sortOrder,
+    deleted,
+    pendingSync,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -331,7 +380,8 @@ class Folder extends DataClass implements Insertable<Folder> {
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
           other.sortOrder == this.sortOrder &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.pendingSync == this.pendingSync);
 }
 
 class FoldersCompanion extends UpdateCompanion<Folder> {
@@ -342,6 +392,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
   final Value<int> updatedAt;
   final Value<int> sortOrder;
   final Value<bool> deleted;
+  final Value<bool> pendingSync;
   final Value<int> rowid;
   const FoldersCompanion({
     this.id = const Value.absent(),
@@ -351,6 +402,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     this.updatedAt = const Value.absent(),
     this.sortOrder = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   FoldersCompanion.insert({
@@ -361,6 +413,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     required int updatedAt,
     this.sortOrder = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -373,6 +426,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     Expression<int>? updatedAt,
     Expression<int>? sortOrder,
     Expression<bool>? deleted,
+    Expression<bool>? pendingSync,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -383,6 +437,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       if (updatedAt != null) 'updated_at': updatedAt,
       if (sortOrder != null) 'sort_order': sortOrder,
       if (deleted != null) 'deleted': deleted,
+      if (pendingSync != null) 'pending_sync': pendingSync,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -395,6 +450,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     Value<int>? updatedAt,
     Value<int>? sortOrder,
     Value<bool>? deleted,
+    Value<bool>? pendingSync,
     Value<int>? rowid,
   }) {
     return FoldersCompanion(
@@ -405,6 +461,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
       updatedAt: updatedAt ?? this.updatedAt,
       sortOrder: sortOrder ?? this.sortOrder,
       deleted: deleted ?? this.deleted,
+      pendingSync: pendingSync ?? this.pendingSync,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -433,6 +490,9 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
+    if (pendingSync.present) {
+      map['pending_sync'] = Variable<bool>(pendingSync.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -449,6 +509,7 @@ class FoldersCompanion extends UpdateCompanion<Folder> {
           ..write('updatedAt: $updatedAt, ')
           ..write('sortOrder: $sortOrder, ')
           ..write('deleted: $deleted, ')
+          ..write('pendingSync: $pendingSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -576,7 +637,22 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'CHECK ("deleted" IN (0, 1))',
     ),
-    defaultValue: const Constant(false),
+    defaultValue: Constant(false),
+  );
+  static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
+    'pendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingSync = GeneratedColumn<bool>(
+    'pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_sync" IN (0, 1))',
+    ),
+    defaultValue: Constant(true),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -590,6 +666,7 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
     createdAt,
     updatedAt,
     deleted,
+    pendingSync,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -679,6 +756,15 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
         deleted.isAcceptableOrUnknown(data['deleted']!, _deletedMeta),
       );
     }
+    if (data.containsKey('pending_sync')) {
+      context.handle(
+        _pendingSyncMeta,
+        pendingSync.isAcceptableOrUnknown(
+          data['pending_sync']!,
+          _pendingSyncMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -728,6 +814,10 @@ class $WordsTable extends Words with TableInfo<$WordsTable, Word> {
         DriftSqlType.bool,
         data['${effectivePrefix}deleted'],
       )!,
+      pendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_sync'],
+      )!,
     );
   }
 
@@ -748,6 +838,7 @@ class Word extends DataClass implements Insertable<Word> {
   final int createdAt;
   final int updatedAt;
   final bool deleted;
+  final bool pendingSync;
   const Word({
     required this.id,
     required this.folderId,
@@ -759,6 +850,7 @@ class Word extends DataClass implements Insertable<Word> {
     required this.createdAt,
     required this.updatedAt,
     required this.deleted,
+    required this.pendingSync,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -775,6 +867,7 @@ class Word extends DataClass implements Insertable<Word> {
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
     map['deleted'] = Variable<bool>(deleted);
+    map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
   }
 
@@ -792,6 +885,7 @@ class Word extends DataClass implements Insertable<Word> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       deleted: Value(deleted),
+      pendingSync: Value(pendingSync),
     );
   }
 
@@ -813,6 +907,7 @@ class Word extends DataClass implements Insertable<Word> {
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       deleted: serializer.fromJson<bool>(json['deleted']),
+      pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
   }
   @override
@@ -829,6 +924,7 @@ class Word extends DataClass implements Insertable<Word> {
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'deleted': serializer.toJson<bool>(deleted),
+      'pendingSync': serializer.toJson<bool>(pendingSync),
     };
   }
 
@@ -843,6 +939,7 @@ class Word extends DataClass implements Insertable<Word> {
     int? createdAt,
     int? updatedAt,
     bool? deleted,
+    bool? pendingSync,
   }) => Word(
     id: id ?? this.id,
     folderId: folderId ?? this.folderId,
@@ -854,6 +951,7 @@ class Word extends DataClass implements Insertable<Word> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     deleted: deleted ?? this.deleted,
+    pendingSync: pendingSync ?? this.pendingSync,
   );
   Word copyWithCompanion(WordsCompanion data) {
     return Word(
@@ -873,6 +971,9 @@ class Word extends DataClass implements Insertable<Word> {
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
       deleted: data.deleted.present ? data.deleted.value : this.deleted,
+      pendingSync: data.pendingSync.present
+          ? data.pendingSync.value
+          : this.pendingSync,
     );
   }
 
@@ -888,7 +989,8 @@ class Word extends DataClass implements Insertable<Word> {
           ..write('difficultSpelling: $difficultSpelling, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('deleted: $deleted')
+          ..write('deleted: $deleted, ')
+          ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
   }
@@ -905,6 +1007,7 @@ class Word extends DataClass implements Insertable<Word> {
     createdAt,
     updatedAt,
     deleted,
+    pendingSync,
   );
   @override
   bool operator ==(Object other) =>
@@ -919,7 +1022,8 @@ class Word extends DataClass implements Insertable<Word> {
           other.difficultSpelling == this.difficultSpelling &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.deleted == this.deleted);
+          other.deleted == this.deleted &&
+          other.pendingSync == this.pendingSync);
 }
 
 class WordsCompanion extends UpdateCompanion<Word> {
@@ -933,6 +1037,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
   final Value<int> createdAt;
   final Value<int> updatedAt;
   final Value<bool> deleted;
+  final Value<bool> pendingSync;
   final Value<int> rowid;
   const WordsCompanion({
     this.id = const Value.absent(),
@@ -945,6 +1050,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.deleted = const Value.absent(),
+    this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   WordsCompanion.insert({
@@ -958,6 +1064,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     this.createdAt = const Value.absent(),
     required int updatedAt,
     this.deleted = const Value.absent(),
+    this.pendingSync = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        folderId = Value(folderId),
@@ -975,6 +1082,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<bool>? deleted,
+    Expression<bool>? pendingSync,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -989,6 +1097,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (deleted != null) 'deleted': deleted,
+      if (pendingSync != null) 'pending_sync': pendingSync,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1004,6 +1113,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
     Value<int>? createdAt,
     Value<int>? updatedAt,
     Value<bool>? deleted,
+    Value<bool>? pendingSync,
     Value<int>? rowid,
   }) {
     return WordsCompanion(
@@ -1017,6 +1127,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       deleted: deleted ?? this.deleted,
+      pendingSync: pendingSync ?? this.pendingSync,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1054,6 +1165,9 @@ class WordsCompanion extends UpdateCompanion<Word> {
     if (deleted.present) {
       map['deleted'] = Variable<bool>(deleted.value);
     }
+    if (pendingSync.present) {
+      map['pending_sync'] = Variable<bool>(pendingSync.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1073,6 +1187,7 @@ class WordsCompanion extends UpdateCompanion<Word> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('deleted: $deleted, ')
+          ..write('pendingSync: $pendingSync, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1197,7 +1312,22 @@ class $AppSettingsTable extends AppSettings
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: false,
-    defaultValue: const Constant(0),
+    defaultValue: Constant(0),
+  );
+  static const VerificationMeta _pendingSyncMeta = const VerificationMeta(
+    'pendingSync',
+  );
+  @override
+  late final GeneratedColumn<bool> pendingSync = GeneratedColumn<bool>(
+    'pending_sync',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pending_sync" IN (0, 1))',
+    ),
+    defaultValue: Constant(true),
   );
   @override
   List<GeneratedColumn> get $columns => [
@@ -1210,6 +1340,7 @@ class $AppSettingsTable extends AppSettings
     themeMode,
     createdAt,
     updatedAt,
+    pendingSync,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1280,6 +1411,15 @@ class $AppSettingsTable extends AppSettings
         updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
       );
     }
+    if (data.containsKey('pending_sync')) {
+      context.handle(
+        _pendingSyncMeta,
+        pendingSync.isAcceptableOrUnknown(
+          data['pending_sync']!,
+          _pendingSyncMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1325,6 +1465,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.int,
         data['${effectivePrefix}updated_at'],
       )!,
+      pendingSync: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pending_sync'],
+      )!,
     );
   }
 
@@ -1348,6 +1492,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final int themeMode;
   final int createdAt;
   final int updatedAt;
+  final bool pendingSync;
   const AppSetting({
     required this.id,
     required this.wordsPerDay,
@@ -1358,6 +1503,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.themeMode,
     required this.createdAt,
     required this.updatedAt,
+    required this.pendingSync,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1371,6 +1517,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['theme_mode'] = Variable<int>(themeMode);
     map['created_at'] = Variable<int>(createdAt);
     map['updated_at'] = Variable<int>(updatedAt);
+    map['pending_sync'] = Variable<bool>(pendingSync);
     return map;
   }
 
@@ -1385,6 +1532,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       themeMode: Value(themeMode),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
+      pendingSync: Value(pendingSync),
     );
   }
 
@@ -1403,6 +1551,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       themeMode: serializer.fromJson<int>(json['themeMode']),
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
+      pendingSync: serializer.fromJson<bool>(json['pendingSync']),
     );
   }
   @override
@@ -1418,6 +1567,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'themeMode': serializer.toJson<int>(themeMode),
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
+      'pendingSync': serializer.toJson<bool>(pendingSync),
     };
   }
 
@@ -1431,6 +1581,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     int? themeMode,
     int? createdAt,
     int? updatedAt,
+    bool? pendingSync,
   }) => AppSetting(
     id: id ?? this.id,
     wordsPerDay: wordsPerDay ?? this.wordsPerDay,
@@ -1441,6 +1592,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     themeMode: themeMode ?? this.themeMode,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
+    pendingSync: pendingSync ?? this.pendingSync,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
     return AppSetting(
@@ -1459,6 +1611,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       themeMode: data.themeMode.present ? data.themeMode.value : this.themeMode,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pendingSync: data.pendingSync.present
+          ? data.pendingSync.value
+          : this.pendingSync,
     );
   }
 
@@ -1473,7 +1628,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('silentMode: $silentMode, ')
           ..write('themeMode: $themeMode, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
   }
@@ -1489,6 +1645,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     themeMode,
     createdAt,
     updatedAt,
+    pendingSync,
   );
   @override
   bool operator ==(Object other) =>
@@ -1502,7 +1659,8 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.silentMode == this.silentMode &&
           other.themeMode == this.themeMode &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.pendingSync == this.pendingSync);
 }
 
 class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
@@ -1515,6 +1673,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<int> themeMode;
   final Value<int> createdAt;
   final Value<int> updatedAt;
+  final Value<bool> pendingSync;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
     this.wordsPerDay = const Value.absent(),
@@ -1525,6 +1684,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.themeMode = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.pendingSync = const Value.absent(),
   });
   AppSettingsCompanion.insert({
     this.id = const Value.absent(),
@@ -1536,6 +1696,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.themeMode = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.pendingSync = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
     Expression<int>? id,
@@ -1547,6 +1708,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<int>? themeMode,
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
+    Expression<bool>? pendingSync,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1558,6 +1720,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (themeMode != null) 'theme_mode': themeMode,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (pendingSync != null) 'pending_sync': pendingSync,
     });
   }
 
@@ -1571,6 +1734,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<int>? themeMode,
     Value<int>? createdAt,
     Value<int>? updatedAt,
+    Value<bool>? pendingSync,
   }) {
     return AppSettingsCompanion(
       id: id ?? this.id,
@@ -1582,6 +1746,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       themeMode: themeMode ?? this.themeMode,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      pendingSync: pendingSync ?? this.pendingSync,
     );
   }
 
@@ -1615,6 +1780,9 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<int>(updatedAt.value);
     }
+    if (pendingSync.present) {
+      map['pending_sync'] = Variable<bool>(pendingSync.value);
+    }
     return map;
   }
 
@@ -1629,7 +1797,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('silentMode: $silentMode, ')
           ..write('themeMode: $themeMode, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pendingSync: $pendingSync')
           ..write(')'))
         .toString();
   }
@@ -1661,6 +1830,7 @@ typedef $$FoldersTableCreateCompanionBuilder =
       required int updatedAt,
       Value<int> sortOrder,
       Value<bool> deleted,
+      Value<bool> pendingSync,
       Value<int> rowid,
     });
 typedef $$FoldersTableUpdateCompanionBuilder =
@@ -1672,6 +1842,7 @@ typedef $$FoldersTableUpdateCompanionBuilder =
       Value<int> updatedAt,
       Value<int> sortOrder,
       Value<bool> deleted,
+      Value<bool> pendingSync,
       Value<int> rowid,
     });
 
@@ -1716,6 +1887,11 @@ class $$FoldersTableFilterComposer
 
   ColumnFilters<bool> get deleted => $composableBuilder(
     column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -1763,6 +1939,11 @@ class $$FoldersTableOrderingComposer
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$FoldersTableAnnotationComposer
@@ -1794,6 +1975,11 @@ class $$FoldersTableAnnotationComposer
 
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => column,
+  );
 }
 
 class $$FoldersTableTableManager
@@ -1831,6 +2017,7 @@ class $$FoldersTableTableManager
                 Value<int> updatedAt = const Value.absent(),
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FoldersCompanion(
                 id: id,
@@ -1840,6 +2027,7 @@ class $$FoldersTableTableManager
                 updatedAt: updatedAt,
                 sortOrder: sortOrder,
                 deleted: deleted,
+                pendingSync: pendingSync,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -1851,6 +2039,7 @@ class $$FoldersTableTableManager
                 required int updatedAt,
                 Value<int> sortOrder = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => FoldersCompanion.insert(
                 id: id,
@@ -1860,6 +2049,7 @@ class $$FoldersTableTableManager
                 updatedAt: updatedAt,
                 sortOrder: sortOrder,
                 deleted: deleted,
+                pendingSync: pendingSync,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -1896,6 +2086,7 @@ typedef $$WordsTableCreateCompanionBuilder =
       Value<int> createdAt,
       required int updatedAt,
       Value<bool> deleted,
+      Value<bool> pendingSync,
       Value<int> rowid,
     });
 typedef $$WordsTableUpdateCompanionBuilder =
@@ -1910,6 +2101,7 @@ typedef $$WordsTableUpdateCompanionBuilder =
       Value<int> createdAt,
       Value<int> updatedAt,
       Value<bool> deleted,
+      Value<bool> pendingSync,
       Value<int> rowid,
     });
 
@@ -1968,6 +2160,11 @@ class $$WordsTableFilterComposer extends Composer<_$AppDatabase, $WordsTable> {
 
   ColumnFilters<bool> get deleted => $composableBuilder(
     column: $table.deleted,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2030,6 +2227,11 @@ class $$WordsTableOrderingComposer
     column: $table.deleted,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WordsTableAnnotationComposer
@@ -2076,6 +2278,11 @@ class $$WordsTableAnnotationComposer
 
   GeneratedColumn<bool> get deleted =>
       $composableBuilder(column: $table.deleted, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => column,
+  );
 }
 
 class $$WordsTableTableManager
@@ -2116,6 +2323,7 @@ class $$WordsTableTableManager
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<bool> deleted = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WordsCompanion(
                 id: id,
@@ -2128,6 +2336,7 @@ class $$WordsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deleted: deleted,
+                pendingSync: pendingSync,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2142,6 +2351,7 @@ class $$WordsTableTableManager
                 Value<int> createdAt = const Value.absent(),
                 required int updatedAt,
                 Value<bool> deleted = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => WordsCompanion.insert(
                 id: id,
@@ -2154,6 +2364,7 @@ class $$WordsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 deleted: deleted,
+                pendingSync: pendingSync,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -2189,6 +2400,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<int> themeMode,
       Value<int> createdAt,
       Value<int> updatedAt,
+      Value<bool> pendingSync,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
     AppSettingsCompanion Function({
@@ -2201,6 +2413,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<int> themeMode,
       Value<int> createdAt,
       Value<int> updatedAt,
+      Value<bool> pendingSync,
     });
 
 class $$AppSettingsTableFilterComposer
@@ -2254,6 +2467,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<int> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -2311,6 +2529,11 @@ class $$AppSettingsTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$AppSettingsTableAnnotationComposer
@@ -2354,6 +2577,11 @@ class $$AppSettingsTableAnnotationComposer
 
   GeneratedColumn<int> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get pendingSync => $composableBuilder(
+    column: $table.pendingSync,
+    builder: (column) => column,
+  );
 }
 
 class $$AppSettingsTableTableManager
@@ -2396,6 +2624,7 @@ class $$AppSettingsTableTableManager
                 Value<int> themeMode = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
                 wordsPerDay: wordsPerDay,
@@ -2406,6 +2635,7 @@ class $$AppSettingsTableTableManager
                 themeMode: themeMode,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                pendingSync: pendingSync,
               ),
           createCompanionCallback:
               ({
@@ -2418,6 +2648,7 @@ class $$AppSettingsTableTableManager
                 Value<int> themeMode = const Value.absent(),
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
+                Value<bool> pendingSync = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
                 wordsPerDay: wordsPerDay,
@@ -2428,6 +2659,7 @@ class $$AppSettingsTableTableManager
                 themeMode: themeMode,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
+                pendingSync: pendingSync,
               ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -21,7 +21,10 @@ class Words extends Table {
 
   IntColumn get updatedAt => integer()();
 
-  BoolColumn get deleted => boolean().withDefault(const Constant(false))();
+  // BoolColumn get deleted => boolean().withDefault(const Constant(false))();
+  BoolColumn get deleted => boolean().withDefault(Constant(false))();
+
+  BoolColumn get pendingSync => boolean().withDefault(Constant(true))();
 
   @override
   Set<Column> get primaryKey => {id};
