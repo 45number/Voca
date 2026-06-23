@@ -207,4 +207,51 @@ class WordRepository {
   Future<void> upsertWord(WordsCompanion word) async {
     await database.into(database.words).insertOnConflictUpdate(word);
   }
+
+  Stream<int> watchWordCount(String folderId) {
+    return (database.select(database.words)
+          ..where((w) => w.folderId.equals(folderId) & w.deleted.equals(false)))
+        .watch()
+        .map((e) => e.length);
+  }
+
+  Stream<List<Word>> watchWords(String folderId) {
+    return (database.select(database.words)
+          ..where((w) => w.folderId.equals(folderId) & w.deleted.equals(false)))
+        .watch();
+  }
+
+  Stream<int> watchDifficultMemorizingCount(String? folderId) {
+    final query = database.select(database.words);
+
+    query.where((w) {
+      final difficult = w.difficultMemorizing.equals(true);
+      final deleted = w.deleted.equals(false);
+
+      if (folderId == null) {
+        return difficult & deleted;
+      }
+
+      return difficult & deleted & w.folderId.equals(folderId);
+    });
+
+    return query.watch().map((e) => e.length);
+  }
+
+  Stream<int> watchDifficultSpellingCount(String? folderId) {
+    final query = database.select(database.words);
+
+    query.where((w) {
+      final difficult = w.difficultSpelling.equals(true);
+      final deleted = w.deleted.equals(false);
+
+      if (folderId == null) {
+        return difficult & deleted;
+      }
+
+      return difficult & deleted & w.folderId.equals(folderId);
+    });
+
+    return query.watch().map((e) => e.length);
+  }
 }

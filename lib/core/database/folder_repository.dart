@@ -191,4 +191,22 @@ class FolderRepository {
   Future<void> upsertFolder(FoldersCompanion folder) async {
     await database.into(database.folders).insertOnConflictUpdate(folder);
   }
+
+  Stream<List<Folder>> watchFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.parentId.isNull() & f.deleted.equals(false))).watch();
+  }
+
+  Stream<List<Folder>> watchChildFolders(String parentId) {
+    return (database.select(database.folders)
+          ..where((f) => f.parentId.equals(parentId) & f.deleted.equals(false)))
+        .watch();
+  }
+
+  Stream<List<Folder>> watchAllFolders() {
+    return (database.select(
+      database.folders,
+    )..where((f) => f.deleted.equals(false))).watch();
+  }
 }

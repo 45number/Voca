@@ -42,189 +42,390 @@ class FolderPage extends StatefulWidget {
 class _FolderPageState extends State<FolderPage> {
   final controller = FolderController();
 
-  List<Folder> childFolders = [];
-
-  int wordCount = 0;
-
-  List<DeckInfo> decks = [];
-
-  bool hasDifficultWords = false;
-
-  int difficultMemorizingCount = 0;
-
-  int difficultSpellingCount = 0;
+  late final Stream<FolderData> dataStream;
 
   @override
   void initState() {
     super.initState();
 
-    loadData();
+    dataStream = controller.watch(widget.folder);
   }
 
-  Future<void> loadData() async {
-    final data = await controller.load(widget.folder);
+  // List<Folder> childFolders = [];
 
-    childFolders = data.childFolders;
+  // int wordCount = 0;
 
-    decks = data.decks;
+  // List<DeckInfo> decks = [];
 
-    wordCount = data.wordCount;
+  // bool hasDifficultWords = false;
 
-    hasDifficultWords = data.hasDifficultWords;
+  // int difficultMemorizingCount = 0;
 
-    difficultMemorizingCount = data.difficultMemorizingCount;
+  // int difficultSpellingCount = 0;
 
-    difficultSpellingCount = data.difficultSpellingCount;
+  // @override
+  // void initState() {
+  //   super.initState();
 
-    if (mounted) {
-      setState(() {});
-    }
-  }
+  //   loadData();
+  // }
+
+  // Future<void> loadData() async {
+  //   final data = await controller.load(widget.folder);
+
+  //   childFolders = data.childFolders;
+
+  //   decks = data.decks;
+
+  //   wordCount = data.wordCount;
+
+  //   hasDifficultWords = data.hasDifficultWords;
+
+  //   difficultMemorizingCount = data.difficultMemorizingCount;
+
+  //   difficultSpellingCount = data.difficultSpellingCount;
+
+  //   if (mounted) {
+  //     setState(() {});
+  //   }
+  // }
+
+  // @override
+  // Widget build(BuildContext context) {
+  //   final isRoot = widget.folder == null;
+
+  //   final hasFolders = childFolders.isNotEmpty;
+
+  //   final hasDecks = decks.isNotEmpty;
+
+  //   final isEmpty = !hasFolders && !hasDecks;
+
+  //   return Scaffold(
+  //     appBar: AppBar(
+  //       title: Text(isRoot ? 'Voca' : widget.folder!.name),
+  //       centerTitle: true,
+  //       actions: [
+  //         if (hasDifficultWords)
+  //           IconButton(
+  //             icon: const Icon(Icons.star),
+  //             onPressed: () {
+  //               showDifficultWordsDialog();
+  //             },
+  //           ),
+  //         StreamBuilder<User?>(
+  //           stream: FirebaseAuth.instance.authStateChanges(),
+
+  //           builder: (context, snapshot) {
+  //             final user = snapshot.data;
+
+  //             return IconButton(
+  //               icon: Icon(user == null ? Icons.cloud_off : Icons.cloud_sync),
+
+  //               onPressed: () async {
+  //                 final updated = await Navigator.push<bool>(
+  //                   context,
+
+  //                   MaterialPageRoute(builder: (_) => const AccountPage()),
+  //                 );
+
+  //                 if (updated == true) {
+  //                   await loadData();
+  //                 }
+  //               },
+  //             );
+  //           },
+  //         ),
+  //         if (isRoot)
+  //           IconButton(
+  //             icon: const Icon(Icons.settings),
+  //             onPressed: () {
+  //               Navigator.push(
+  //                 context,
+  //                 MaterialPageRoute(builder: (_) => const SettingsPage()),
+  //               );
+  //             },
+  //           ),
+  //       ],
+  //     ),
+  //     body: isEmpty
+  //         ? EmptyFolderView(isRoot: isRoot)
+  //         : ListView(
+  //             padding: AppPadding.screen,
+  //             children: [
+  //               if (hasFolders) ...[
+  //                 const Padding(
+  //                   padding: AppPadding.sectionTitle,
+  //                   child: Text('Folders', style: AppTypography.sectionTitle),
+  //                 ),
+  //                 ...childFolders.map((folder) {
+  //                   return FolderTile(
+  //                     folder: folder,
+  //                     onTap: () async {
+  //                       await Navigator.push(
+  //                         context,
+  //                         MaterialPageRoute(
+  //                           builder: (_) => FolderPage(folder: folder),
+  //                         ),
+  //                       );
+
+  //                       if (!mounted) {
+  //                         return;
+  //                       }
+
+  //                       await loadData();
+  //                     },
+  //                     onRename: () {
+  //                       renameFolder(folder);
+  //                     },
+  //                     onMove: () {
+  //                       moveFolder(folder);
+  //                     },
+  //                     onDelete: () {
+  //                       deleteFolder(folder);
+  //                     },
+  //                   );
+  //                 }),
+  //               ],
+
+  //               if (hasFolders && hasDecks)
+  //                 const SizedBox(height: AppSpacing.md),
+
+  //               if (hasDecks) ...[
+  //                 const Padding(
+  //                   padding: AppPadding.sectionTitle,
+  //                   child: Text('Decks', style: AppTypography.sectionTitle),
+  //                 ),
+  //                 ...decks.map((deck) {
+  //                   return DeckTile(
+  //                     deck: deck,
+  //                     onTap: () async {
+  //                       await showStudyModeDialog(deck);
+  //                     },
+  //                   );
+  //                 }),
+  //               ],
+  //             ],
+  //           ),
+  //     floatingActionButton: FloatingActionButton(
+  //       onPressed: showAddMenu,
+  //       child: const Icon(Icons.add),
+  //     ),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
-    final isRoot = widget.folder == null;
+    return StreamBuilder<FolderData>(
+      stream: dataStream,
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    final hasFolders = childFolders.isNotEmpty;
+        final data = snapshot.data!;
 
-    final hasDecks = decks.isNotEmpty;
+        final childFolders = data.childFolders;
+        final decks = data.decks;
 
-    final isEmpty = !hasFolders && !hasDecks;
+        final hasDifficultWords = data.hasDifficultWords;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isRoot ? 'Voca' : widget.folder!.name),
-        centerTitle: true,
-        actions: [
-          if (hasDifficultWords)
-            IconButton(
-              icon: const Icon(Icons.star),
-              onPressed: () {
-                showDifficultWordsDialog();
-              },
-            ),
-          // IconButton(
-          //   icon: Icon(
-          //     FirebaseAuth.instance.currentUser == null
-          //         ? Icons.cloud_off
-          //         : Icons.cloud_done,
-          //   ),
+        final difficultMemorizingCount = data.difficultMemorizingCount;
 
-          //   onPressed: () {
-          //     Navigator.push(
-          //       context,
+        final difficultSpellingCount = data.difficultSpellingCount;
 
-          //       MaterialPageRoute(builder: (_) => const AccountPage()),
-          //     );
-          //   },
-          // ),
-          StreamBuilder<User?>(
-            stream: FirebaseAuth.instance.authStateChanges(),
+        final isRoot = widget.folder == null;
 
-            builder: (context, snapshot) {
-              final user = snapshot.data;
+        final hasFolders = childFolders.isNotEmpty;
+        final hasDecks = decks.isNotEmpty;
+        final isEmpty = !hasFolders && !hasDecks;
 
-              return IconButton(
-                icon: Icon(user == null ? Icons.cloud_off : Icons.cloud_sync),
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(isRoot ? 'Voca' : widget.folder!.name),
+            centerTitle: true,
+            actions: [
+              if (hasDifficultWords)
+                IconButton(
+                  icon: const Icon(Icons.star),
+                  // onPressed: () {
+                  //   showDifficultWordsDialog();
+                  // },
+                  onPressed: () {
+                    showDifficultWordsDialog(
+                      difficultMemorizingCount,
+                      difficultSpellingCount,
+                    );
+                  },
+                ),
 
-                // onPressed: () {
-                //   Navigator.push(
-                //     context,
+              StreamBuilder<User?>(
+                stream: FirebaseAuth.instance.authStateChanges(),
 
-                //     MaterialPageRoute(builder: (_) => const AccountPage()),
-                //   );
-                // },
-                onPressed: () async {
-                  final updated = await Navigator.push<bool>(
-                    context,
+                builder: (context, snapshot) {
+                  final user = snapshot.data;
 
-                    MaterialPageRoute(builder: (_) => const AccountPage()),
+                  return IconButton(
+                    icon: Icon(
+                      user == null ? Icons.cloud_off : Icons.cloud_sync,
+                    ),
+
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+
+                        MaterialPageRoute(builder: (_) => const AccountPage()),
+                      );
+                    },
                   );
-
-                  if (updated == true) {
-                    await loadData();
-                  }
                 },
-              );
-            },
+              ),
+
+              if (isRoot)
+                IconButton(
+                  icon: const Icon(Icons.settings),
+
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+
+                      MaterialPageRoute(builder: (_) => const SettingsPage()),
+                    );
+                  },
+                ),
+            ],
           ),
-          if (isRoot)
-            IconButton(
-              icon: const Icon(Icons.settings),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const SettingsPage()),
-                );
-              },
-            ),
-        ],
-      ),
-      body: isEmpty
-          ? EmptyFolderView(isRoot: isRoot)
-          : ListView(
-              padding: AppPadding.screen,
-              children: [
-                if (hasFolders) ...[
-                  const Padding(
-                    padding: AppPadding.sectionTitle,
-                    child: Text('Folders', style: AppTypography.sectionTitle),
-                  ),
-                  ...childFolders.map((folder) {
-                    return FolderTile(
-                      folder: folder,
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FolderPage(folder: folder),
-                          ),
+
+          body: isEmpty
+              ? EmptyFolderView(isRoot: isRoot)
+              : ListView(
+                  padding: AppPadding.screen,
+
+                  children: [
+                    if (hasFolders) ...[
+                      const Padding(
+                        padding: AppPadding.sectionTitle,
+
+                        child: Text(
+                          'Folders',
+
+                          style: AppTypography.sectionTitle,
+                        ),
+                      ),
+
+                      ...childFolders.map((folder) {
+                        return FolderTile(
+                          folder: folder,
+
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+
+                              MaterialPageRoute(
+                                builder: (_) => FolderPage(folder: folder),
+                              ),
+                            );
+                          },
+
+                          onRename: () {
+                            renameFolder(folder);
+                          },
+
+                          onMove: () {
+                            moveFolder(folder);
+                          },
+
+                          onDelete: () {
+                            deleteFolder(folder);
+                          },
                         );
+                      }),
+                    ],
 
-                        if (!mounted) {
-                          return;
-                        }
+                    if (hasFolders && hasDecks)
+                      const SizedBox(height: AppSpacing.md),
 
-                        await loadData();
-                      },
-                      onRename: () {
-                        renameFolder(folder);
-                      },
-                      onMove: () {
-                        moveFolder(folder);
-                      },
-                      onDelete: () {
-                        deleteFolder(folder);
-                      },
-                    );
-                  }),
-                ],
+                    if (hasDecks) ...[
+                      const Padding(
+                        padding: AppPadding.sectionTitle,
 
-                if (hasFolders && hasDecks)
-                  const SizedBox(height: AppSpacing.md),
+                        child: Text('Decks', style: AppTypography.sectionTitle),
+                      ),
 
-                if (hasDecks) ...[
-                  const Padding(
-                    padding: AppPadding.sectionTitle,
-                    child: Text('Decks', style: AppTypography.sectionTitle),
-                  ),
-                  ...decks.map((deck) {
-                    return DeckTile(
-                      deck: deck,
-                      onTap: () async {
-                        await showStudyModeDialog(deck);
-                      },
-                    );
-                  }),
-                ],
-              ],
-            ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: showAddMenu,
-        child: const Icon(Icons.add),
-      ),
+                      ...decks.map((deck) {
+                        return DeckTile(
+                          deck: deck,
+
+                          onTap: () async {
+                            await showStudyModeDialog(deck);
+                          },
+                        );
+                      }),
+                    ],
+                  ],
+                ),
+
+          floatingActionButton: FloatingActionButton(
+            onPressed: showAddMenu,
+
+            child: const Icon(Icons.add),
+          ),
+        );
+      },
     );
   }
+  /////
+
+  // Future<void> showAddMenu() async {
+  //   final result = await AddMenuDialog.show(
+  //     context: context,
+  //     isRoot: widget.folder == null,
+  //   );
+
+  //   if (!mounted) {
+  //     return;
+  //   }
+
+  //   switch (result) {
+  //     case AddMenuResult.folder:
+  //       await createFolder();
+  //       break;
+
+  //     case AddMenuResult.word:
+  //       await Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => AddWordPage(folderId: widget.folder!.id),
+  //         ),
+  //       );
+
+  //       if (!mounted) {
+  //         return;
+  //       }
+
+  //       await loadData();
+  //       break;
+
+  //     case AddMenuResult.browseWords:
+  //       await Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => WordsPage(folderId: widget.folder!.id),
+  //         ),
+  //       );
+
+  //       if (!mounted) {
+  //         return;
+  //       }
+
+  //       await loadData();
+  //       break;
+
+  //     case null:
+  //       break;
+  //   }
+  // }
 
   Future<void> showAddMenu() async {
     final result = await AddMenuDialog.show(
@@ -248,12 +449,6 @@ class _FolderPageState extends State<FolderPage> {
             builder: (_) => AddWordPage(folderId: widget.folder!.id),
           ),
         );
-
-        if (!mounted) {
-          return;
-        }
-
-        await loadData();
         break;
 
       case AddMenuResult.browseWords:
@@ -263,18 +458,33 @@ class _FolderPageState extends State<FolderPage> {
             builder: (_) => WordsPage(folderId: widget.folder!.id),
           ),
         );
-
-        if (!mounted) {
-          return;
-        }
-
-        await loadData();
         break;
 
       case null:
         break;
     }
   }
+
+  // Future<void> createFolder() async {
+  //   final name = await TextInputDialog.show(
+  //     context: context,
+  //     title: 'Create Folder',
+  //     hintText: 'Folder name',
+  //     confirmText: 'Create',
+  //   );
+
+  //   if (!mounted) {
+  //     return;
+  //   }
+
+  //   if (name == null) {
+  //     return;
+  //   }
+
+  //   await controller.createFolder(name: name, parentId: widget.folder?.id);
+
+  //   await loadData();
+  // }
 
   Future<void> createFolder() async {
     final name = await TextInputDialog.show(
@@ -284,17 +494,11 @@ class _FolderPageState extends State<FolderPage> {
       confirmText: 'Create',
     );
 
-    if (!mounted) {
-      return;
-    }
-
-    if (name == null) {
+    if (!mounted || name == null) {
       return;
     }
 
     await controller.createFolder(name: name, parentId: widget.folder?.id);
-
-    await loadData();
   }
 
   Future<void> renameFolder(Folder folder) async {
@@ -314,7 +518,7 @@ class _FolderPageState extends State<FolderPage> {
 
     await controller.renameFolder(folderId: folder.id, name: name);
 
-    await loadData();
+    // await loadData();
   }
 
   Future<void> moveFolder(Folder folder) async {
@@ -339,7 +543,7 @@ class _FolderPageState extends State<FolderPage> {
 
     await controller.moveFolder(folderId: folder.id, parentId: parentId);
 
-    await loadData();
+    // await loadData();
   }
 
   Future<void> deleteFolder(Folder folder) async {
@@ -359,7 +563,7 @@ class _FolderPageState extends State<FolderPage> {
 
     await controller.deleteFolder(folder.id);
 
-    await loadData();
+    // await loadData();
   }
 
   Future<void> showStudyModeDialog(DeckInfo deck) async {
@@ -399,7 +603,7 @@ class _FolderPageState extends State<FolderPage> {
         return;
       }
 
-      await loadData();
+      // await loadData();
 
       return;
     }
@@ -420,10 +624,51 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
-    await loadData();
+    // await loadData();
   }
 
-  Future<void> showDifficultWordsDialog() async {
+  // Future<void> showDifficultWordsDialog() async {
+  //   final items = <PopupMenuEntry<StudyMode>>[];
+
+  //   if (difficultMemorizingCount > 0) {
+  //     items.add(
+  //       PopupMenuItem(
+  //         value: StudyMode.memorizing,
+  //         child: Text('Memorizing ($difficultMemorizingCount)'),
+  //       ),
+  //     );
+  //   }
+
+  //   if (difficultSpellingCount > 0) {
+  //     items.add(
+  //       PopupMenuItem(
+  //         value: StudyMode.spelling,
+  //         child: Text('Spelling ($difficultSpellingCount)'),
+  //       ),
+  //     );
+  //   }
+
+  //   final mode = await showMenu<StudyMode>(
+  //     context: context,
+  //     position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
+  //     items: items,
+  //   );
+
+  //   if (!mounted) {
+  //     return;
+  //   }
+
+  //   if (mode == null) {
+  //     return;
+  //   }
+
+  //   await openDifficultWords(mode);
+  // }
+
+  Future<void> showDifficultWordsDialog(
+    int difficultMemorizingCount,
+    int difficultSpellingCount,
+  ) async {
     final items = <PopupMenuEntry<StudyMode>>[];
 
     if (difficultMemorizingCount > 0) {
@@ -444,17 +689,17 @@ class _FolderPageState extends State<FolderPage> {
       );
     }
 
+    if (items.isEmpty) {
+      return;
+    }
+
     final mode = await showMenu<StudyMode>(
       context: context,
       position: const RelativeRect.fromLTRB(1000, 80, 16, 0),
       items: items,
     );
 
-    if (!mounted) {
-      return;
-    }
-
-    if (mode == null) {
+    if (!mounted || mode == null) {
       return;
     }
 
@@ -514,7 +759,7 @@ class _FolderPageState extends State<FolderPage> {
         return;
       }
 
-      await loadData();
+      // await loadData();
 
       return;
     }
@@ -534,12 +779,12 @@ class _FolderPageState extends State<FolderPage> {
       return;
     }
 
-    await loadData();
+    // await loadData();
 
     if (!mounted) {
       return;
     }
 
-    await loadData();
+    // await loadData();
   }
 }

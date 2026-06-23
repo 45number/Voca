@@ -84,4 +84,10 @@ class SettingsRepository {
   Future<void> upsertSettings(AppSettingsCompanion settings) async {
     await database.into(database.appSettings).insertOnConflictUpdate(settings);
   }
+
+  Stream<AppSetting> watchSettings() {
+    return (database.select(
+      database.appSettings,
+    )..where((s) => s.id.equals(1))).watchSingle();
+  }
 }

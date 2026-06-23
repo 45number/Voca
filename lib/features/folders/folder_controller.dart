@@ -4,6 +4,8 @@ import '../../core/database/database_provider.dart';
 import '../decks/deck_builder.dart';
 import '../decks/deck_info.dart';
 
+import 'package:rxdart/rxdart.dart';
+
 class FolderData {
   final List<Folder> childFolders;
 
@@ -144,5 +146,114 @@ class FolderController {
 
   Future<List<Folder>> getFolderPath(String folderId) {
     return folderRepository.getFolderPath(folderId);
+  }
+
+  // Stream<FolderData> watch(Folder? folder) {
+  //   final childFoldersStream = folder == null
+  //       ? folderRepository.watchFolders()
+  //       : folderRepository.watchChildFolders(folder.id);
+
+  //   final settingsStream = settingsRepository.watchSettings();
+
+  //   final wordCountStream = folder == null
+  //       ? Stream.value(0)
+  //       : wordRepository.watchWordCount(folder.id);
+
+  //   return Rx.combineLatest3(
+  //     childFoldersStream,
+
+  //     settingsStream,
+
+  //     wordCountStream,
+
+  //     (List<Folder> childFolders, AppSetting settings, int wordCount) {
+  //       List<DeckInfo> decks = [];
+
+  //       if (folder != null) {
+  //         decks = DeckBuilder.build(
+  //           totalWords: wordCount,
+
+  //           wordsPerDeck: settings.wordsPerDay,
+  //         );
+  //       }
+
+  //       return FolderData(
+  //         childFolders: childFolders,
+
+  //         decks: decks,
+
+  //         wordCount: wordCount,
+
+  //         difficultMemorizingCount: 0,
+
+  //         difficultSpellingCount: 0,
+  //       );
+  //     },
+  //   );
+  // }
+
+  Stream<FolderData> watch(Folder? folder) {
+    final childFoldersStream = folder == null
+        ? folderRepository.watchFolders()
+        : folderRepository.watchChildFolders(folder.id);
+
+    final settingsStream = settingsRepository.watchSettings();
+
+    final wordCountStream = folder == null
+        ? Stream.value(0)
+        : wordRepository.watchWordCount(folder.id);
+
+    final difficultMemorizingStream = wordRepository
+        .watchDifficultMemorizingCount(folder?.id);
+
+    final difficultSpellingStream = wordRepository.watchDifficultSpellingCount(
+      folder?.id,
+    );
+
+    return Rx.combineLatest5(
+      childFoldersStream,
+
+      settingsStream,
+
+      wordCountStream,
+
+      difficultMemorizingStream,
+
+      difficultSpellingStream,
+
+      (
+        List<Folder> childFolders,
+
+        AppSetting settings,
+
+        int wordCount,
+
+        int difficultMemorizingCount,
+
+        int difficultSpellingCount,
+      ) {
+        List<DeckInfo> decks = [];
+
+        if (folder != null) {
+          decks = DeckBuilder.build(
+            totalWords: wordCount,
+
+            wordsPerDeck: settings.wordsPerDay,
+          );
+        }
+
+        return FolderData(
+          childFolders: childFolders,
+
+          decks: decks,
+
+          wordCount: wordCount,
+
+          difficultMemorizingCount: difficultMemorizingCount,
+
+          difficultSpellingCount: difficultSpellingCount,
+        );
+      },
+    );
   }
 }
