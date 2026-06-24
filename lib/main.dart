@@ -19,51 +19,11 @@ import 'core/database/word_repository.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
-////////////////
-// import 'dart:io';
-
-// import 'package:path_provider/path_provider.dart';
-// import 'package:path/path.dart' as p;
+import 'dart:async';
+import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> main() async {
-  // print("1");
   WidgetsFlutterBinding.ensureInitialized();
-
-  // await Firebase.initializeApp();
-  //////////////////////
-  ///
-  /////////////////////
-
-  // const resetDb = true;
-
-  // if (resetDb) {
-  //   final dir = await getApplicationDocumentsDirectory();
-
-  //   final dbFile = File(p.join(dir.path, 'voca.db'));
-
-  //   if (await dbFile.exists()) {
-  //     await dbFile.delete();
-  //   }
-  // }
-
-  //////////////////
-  ///
-  ///
-
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // if (Firebase.apps.isEmpty) {
-  //   await Firebase.initializeApp(
-  //     options: DefaultFirebaseOptions.currentPlatform,
-  //   );
-  // }
-
-  // try {
-  //   Firebase.app();
-  // } catch (_) {
-  //   await Firebase.initializeApp(
-  //     options: DefaultFirebaseOptions.currentPlatform,
-  //   );
-  // }
 
   if (defaultTargetPlatform == TargetPlatform.windows) {
     await Firebase.initializeApp(
@@ -95,13 +55,77 @@ Future<void> main() async {
   runApp(const VocaApp());
 }
 
-class VocaApp extends StatelessWidget {
+// class VocaApp extends StatelessWidget {
+//   const VocaApp({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedBuilder(
+//       animation: themeController,
+//       builder: (context, child) {
+//         return MaterialApp(
+//           title: 'Voca',
+
+//           debugShowCheckedModeBanner: false,
+
+//           theme: AppTheme.light,
+
+//           darkTheme: AppTheme.dark,
+
+//           themeMode: themeController.themeMode,
+
+//           home: const FolderPage(),
+//         );
+//       },
+//     );
+//   }
+// }
+
+class VocaApp extends StatefulWidget {
   const VocaApp({super.key});
+
+  @override
+  State<VocaApp> createState() => _VocaAppState();
+}
+
+class _VocaAppState extends State<VocaApp> {
+  StreamSubscription<User?>? _authSub;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _authSub = FirebaseAuth.instance.authStateChanges().listen(_onAuthChanged);
+  }
+
+  Future<void> _onAuthChanged(User? user) async {
+    try {
+      if (user != null) {
+        print("Sync START");
+
+        await syncService.start();
+      } else {
+        print("Sync STOP");
+
+        await syncService.dispose();
+      }
+    } catch (e) {
+      print(e);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: themeController,
+
       builder: (context, child) {
         return MaterialApp(
           title: 'Voca',

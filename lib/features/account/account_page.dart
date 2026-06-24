@@ -47,7 +47,7 @@ class _AccountPageState extends State<AccountPage> {
         password: passwordController.text,
       );
 
-      await syncService.start();
+      // await syncService.start();
 
       if (mounted) {
         setState(() {});
@@ -76,7 +76,7 @@ class _AccountPageState extends State<AccountPage> {
         password: passwordController.text,
       );
 
-      await syncService.start();
+      // await syncService.start();
 
       if (mounted) {
         setState(() {});
@@ -117,7 +117,7 @@ class _AccountPageState extends State<AccountPage> {
   }
 
   Future<void> logout() async {
-    await syncService.dispose();
+    // await syncService.dispose();
     await auth.logout();
 
     if (mounted) {
