@@ -5,6 +5,11 @@ import 'core/database/database_provider.dart';
 
 import 'core/firebase/firestore_service.dart';
 import 'core/firebase/sync_service.dart';
+
+import 'core/firebase/storage_service.dart';
+import 'shared/audio/services/audio_storage_service.dart';
+import 'shared/audio/services/audio_gc_service.dart';
+
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 
@@ -33,17 +38,41 @@ Future<void> main() async {
     await Firebase.initializeApp();
   }
 
-  // Database
+  // // Database
+  // database = AppDatabase();
+  // // Repositories
+  // folderRepository = FolderRepository(database);
+  // wordRepository = WordRepository(database);
+  // settingsRepository = SettingsRepository(database);
+  // syncService = SyncService(
+  //   folders: folderRepository,
+  //   words: wordRepository,
+  //   settings: settingsRepository,
+  //   firestore: FirestoreService(),
+  // );
+
   database = AppDatabase();
-  // Repositories
   folderRepository = FolderRepository(database);
   wordRepository = WordRepository(database);
   settingsRepository = SettingsRepository(database);
+
+  final firestore = FirestoreService();
+  final storage = StorageService();
+  final audioStorage = AudioStorageService();
+  final gc = AudioGcService(
+    storage: audioStorage,
+    remoteStorage: storage,
+    words: wordRepository,
+  );
+
   syncService = SyncService(
     folders: folderRepository,
     words: wordRepository,
     settings: settingsRepository,
-    firestore: FirestoreService(),
+    firestore: firestore,
+    storage: storage,
+    audioStorage: audioStorage,
+    gc: gc,
   );
 
   // Theme

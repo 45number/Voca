@@ -249,8 +249,21 @@ class AudioEditorController extends ChangeNotifier {
 
   //   super.dispose();
   // }
+  // @override
+  // void dispose() {
+  //   playheadSubscription?.cancel();
+
+  //   amplitudeSubscription?.cancel();
+
+  //   player.dispose();
+
+  //   super.dispose();
+  // }
+
   @override
   void dispose() {
+    unawaited(cleanupTemporaryAudio());
+
     playheadSubscription?.cancel();
 
     amplitudeSubscription?.cancel();

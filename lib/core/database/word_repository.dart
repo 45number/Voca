@@ -296,6 +296,12 @@ class WordRepository {
     )..where((w) => w.pendingSync.equals(true))).get();
   }
 
+  Future<List<Word>> getDeletedWords() {
+    return (database.select(
+      database.words,
+    )..where((w) => w.deleted.equals(true))).get();
+  }
+
   Future<void> markWordSynced(String id) async {
     await (database.update(database.words)..where((w) => w.id.equals(id)))
         .write(const WordsCompanion(pendingSync: Value(false)));

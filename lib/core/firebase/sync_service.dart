@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../shared/audio/services/audio_gc_service.dart';
 import '../database/folder_repository.dart';
 import '../database/settings_repository.dart';
 import '../database/word_repository.dart';
@@ -10,11 +11,24 @@ import 'dto/word_dto.dart';
 
 import 'firestore_service.dart';
 
+import 'dart:io';
+
+import '../../shared/audio/services/audio_storage_service.dart';
+import 'storage_service.dart';
+
+import '../database/app_database.dart';
+
 class SyncService {
   final FolderRepository folders;
   final WordRepository words;
   final SettingsRepository settings;
   final FirestoreService firestore;
+
+  final StorageService storage;
+
+  final AudioStorageService audioStorage;
+
+  final AudioGcService gc;
 
   // StreamSubscription? _foldersSub;
   // StreamSubscription? _wordsSub;
@@ -40,6 +54,9 @@ class SyncService {
     required this.words,
     required this.settings,
     required this.firestore,
+    required this.storage,
+    required this.audioStorage,
+    required this.gc,
   });
 
   // Future<void> start() async {
@@ -54,11 +71,15 @@ class SyncService {
   Future<void> start() async {
     await dispose();
 
+    // await gc.cleanup();
+
     await observeDirty();
 
     await startRealtime();
 
     await uploadDirty();
+
+    await gc.cleanup();
   }
 
   Future<void> startRealtime() async {
@@ -84,13 +105,33 @@ class SyncService {
     /// Words
     //////////////////////////////////////////
 
+    // _wordsRealtimeSub = firestore.listenWords().listen((snapshot) async {
+    //   for (final change in snapshot.docChanges) {
+    //     final data = change.doc.data();
+
+    //     if (data == null) continue;
+
+    //     final dto = WordDto.fromJson(data);
+
+    //     await words.upsertIfNewer(dto);
+    //   }
+    // });
+
     _wordsRealtimeSub = firestore.listenWords().listen((snapshot) async {
       for (final change in snapshot.docChanges) {
         final data = change.doc.data();
 
-        if (data == null) continue;
+        if (data == null) {
+          continue;
+        }
 
         final dto = WordDto.fromJson(data);
+
+        try {
+          await downloadMissingAudio(dto);
+        } catch (e) {
+          print('downloadMissingAudio: $e');
+        }
 
         await words.upsertIfNewer(dto);
       }
@@ -171,12 +212,22 @@ class SyncService {
     });
   }
 
+  // Future<void> uploadDirty() async {
+  //   await Future.wait([
+  //     uploadDirtyFolders(),
+  //     uploadDirtyWords(),
+  //     uploadDirtySettings(),
+  //   ]);
+  // }
+
   Future<void> uploadDirty() async {
     await Future.wait([
       uploadDirtyFolders(),
       uploadDirtyWords(),
       uploadDirtySettings(),
     ]);
+
+    // await gc.cleanup();
   }
 
   Future<void> uploadDirtyFolders() async {
@@ -195,19 +246,238 @@ class SyncService {
     }
   }
 
+  // Future<void> uploadDirtyWords() async {
+  //   final dirty = await words.getDirtyWords();
+
+  //   for (final word in dirty) {
+  //     try {
+  //       final dto = WordDto.fromWord(word);
+
+  //       await firestore.uploadWord(dto);
+
+  //       await words.markWordSynced(word.id);
+  //     } catch (e) {
+  //       print(e);
+  //     }
+  //   }
+  // }
+
+  // Future<void> uploadDirtyWords() async {
+  //   final dirty = await words.getDirtyWords();
+
+  //   for (final word in dirty) {
+  //     try {
+  //       // Сначала синхронизируем аудио, если оно есть
+  //       await syncAudioForWord(word);
+
+  //       // Затем синхронизируем само слово
+  //       final dto = WordDto.fromWord(word);
+
+  //       await firestore.uploadWord(dto);
+
+  //       // Помечаем локальную запись как синхронизированную
+  //       await words.markWordSynced(word.id);
+  //     } catch (e) {
+  //       print('uploadDirtyWords: $e');
+  //     }
+  //   }
+  // }
+
+  ////////////////////////////
+
+  // Future<void> uploadDirtyWords() async {
+  //   final dirty = await words.getDirtyWords();
+
+  //   print("DIRTY ${dirty.length}");
+
+  //   for (final word in dirty) {
+  //     try {
+  //       await syncAudioForWord(word);
+  //     } catch (e) {
+  //       print("AUDIO ERROR $e");
+  //     }
+
+  //     try {
+  //       final dto = WordDto.fromWord(word);
+
+  //       await firestore.uploadWord(dto);
+
+  //       print("WORD UPLOADED");
+
+  //       await words.markWordSynced(word.id);
+  //     } catch (e) {
+  //       print("FIRESTORE ERROR $e");
+  //     }
+  //   }
+  // }
+
   Future<void> uploadDirtyWords() async {
     final dirty = await words.getDirtyWords();
 
+    print('DIRTY WORDS: ${dirty.length}');
+
     for (final word in dirty) {
+      print('Processing: ${word.word}');
+
+      //
+      // Аудио не должно блокировать Firestore
+      //
+      try {
+        await syncAudioForWord(word);
+      } catch (e) {
+        print('AUDIO ERROR: $e');
+      }
+
+      //
+      // Firestore
+      //
       try {
         final dto = WordDto.fromWord(word);
 
         await firestore.uploadWord(dto);
 
+        print('FIRESTORE OK');
+
         await words.markWordSynced(word.id);
+
+        print('SYNCED');
       } catch (e) {
-        print(e);
+        print('FIRESTORE ERROR: $e');
       }
+    }
+  }
+
+  // Future<void> syncAudioForWord(dynamic word) async {
+  //   final audioId = word.audioFile;
+
+  //   if (audioId == null || audioId.isEmpty) {
+  //     return;
+  //   }
+
+  //   final localExists = await audioStorage.exists(audioId);
+
+  //   if (!localExists) {
+  //     return;
+  //   }
+
+  //   final remoteExists = await storage.exists(audioId);
+
+  //   if (remoteExists) {
+  //     return;
+  //   }
+
+  //   final file = await audioStorage.getFile(audioId);
+
+  //   await storage.uploadAudio(file, audioId);
+  // }
+
+  // Future<void> syncAudioForWord(Word word) async {
+  //   final audioId = word.audioFile;
+
+  //   if (audioId == null || audioId.isEmpty) {
+  //     return;
+  //   }
+
+  //   //////////////////////////////////////
+  //   /// Word deleted
+  //   //////////////////////////////////////
+
+  //   if (word.deleted) {
+  //     try {
+  //       await storage.deleteAudio(audioId);
+  //     } catch (e) {
+  //       print('delete remote audio: $e');
+  //     }
+
+  //     try {
+  //       await audioStorage.delete(audioId);
+  //     } catch (e) {
+  //       print('delete local audio: $e');
+  //     }
+
+  //     return;
+  //   }
+
+  //   //////////////////////////////////////
+  //   /// Upload audio
+  //   //////////////////////////////////////
+
+  //   final localExists = await audioStorage.exists(audioId);
+
+  //   if (!localExists) {
+  //     return;
+  //   }
+
+  //   final remoteExists = await storage.exists(audioId);
+
+  //   if (remoteExists) {
+  //     return;
+  //   }
+
+  //   final file = await audioStorage.getFile(audioId);
+
+  //   await storage.uploadAudio(file, audioId);
+  // }
+
+  //////////////////
+  ///
+  ///
+
+  // Future<void> syncAudioForWord(Word word) async {
+  //   final audioId = word.audioFile;
+
+  //   if (audioId == null || audioId.isEmpty) {
+  //     return;
+  //   }
+
+  //   final localExists = await audioStorage.exists(audioId);
+
+  //   if (!localExists) {
+  //     return;
+  //   }
+
+  //   final remoteExists = await storage.exists(audioId);
+
+  //   if (remoteExists) {
+  //     return;
+  //   }
+
+  //   try {
+  //     final file = await audioStorage.getFile(audioId);
+
+  //     await storage.uploadAudio(file, audioId);
+  //   } catch (e) {
+  //     print('syncAudioForWord $e');
+  //   }
+  // }
+
+  Future<void> syncAudioForWord(Word word) async {
+    final audioId = word.audioFile;
+
+    if (audioId == null || audioId.isEmpty) {
+      return;
+    }
+
+    final localExists = await audioStorage.exists(audioId);
+
+    if (!localExists) {
+      return;
+    }
+
+    final remoteExists = await storage.exists(audioId);
+
+    if (remoteExists) {
+      return;
+    }
+
+    try {
+      final file = await audioStorage.getFile(audioId);
+
+      await storage.uploadAudio(file, audioId);
+
+      print('AUDIO UPLOADED');
+    } catch (e) {
+      print('syncAudioForWord: $e');
     }
   }
 
@@ -250,5 +520,23 @@ class SyncService {
     _foldersRealtimeSub = null;
     _wordsRealtimeSub = null;
     _settingsRealtimeSub = null;
+  }
+
+  Future<void> downloadMissingAudio(WordDto dto) async {
+    final audioId = dto.audioFile;
+
+    if (audioId == null || audioId.isEmpty) {
+      return;
+    }
+
+    final localExists = await audioStorage.exists(audioId);
+
+    if (localExists) {
+      return;
+    }
+
+    final file = await audioStorage.getFile(audioId);
+
+    await storage.downloadAudio(audioId, file);
   }
 }

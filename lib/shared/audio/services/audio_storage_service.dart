@@ -41,4 +41,14 @@ class AudioStorageService {
       await file.delete();
     }
   }
+
+  Future<List<File>> getAllFiles() async {
+    final dir = await getAudioDirectory();
+
+    if (!await dir.exists()) {
+      return [];
+    }
+
+    return dir.listSync().whereType<File>().toList();
+  }
 }
