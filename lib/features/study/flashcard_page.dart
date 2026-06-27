@@ -5,7 +5,6 @@ import '../../core/theme/theme.dart';
 
 import '../settings/front_side.dart';
 
-// import '../../shared/audio/services/audio_service.dart';
 import '../../shared/audio/services/audio_player_service.dart';
 import 'flashcard_controller.dart';
 import 'study_complete_dialog.dart';
@@ -22,6 +21,8 @@ import '../folders/folder_controller.dart';
 import 'widgets/study_breadcrumb_bar.dart';
 
 import '../words/word_editor_page.dart';
+
+import '../../shared/audio/services/audio_storage_service.dart';
 
 class FlashcardPage extends StatefulWidget {
   final List<Word> words;
@@ -53,6 +54,8 @@ class _FlashcardPageState extends State<FlashcardPage> {
   final session = StudySessionController();
 
   final audioService = AudioPlayerService();
+
+  final audioStorage = AudioStorageService();
 
   FlashcardData? data;
 
@@ -103,6 +106,20 @@ class _FlashcardPageState extends State<FlashcardPage> {
     }
   }
 
+  // Future<void> preloadCurrentAudio() async {
+  //   if (data == null) {
+  //     return;
+  //   }
+
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.preload(audioFile);
+  // }
+
   Future<void> preloadCurrentAudio() async {
     if (data == null) {
       return;
@@ -114,7 +131,10 @@ class _FlashcardPageState extends State<FlashcardPage> {
       return;
     }
 
-    await audioService.preload(audioFile);
+    // final path = await controller.audioStorage.getAudioPath(audioFile);
+    final path = await audioStorage.getAudioPath(audioFile);
+
+    await audioService.preload(path);
   }
 
   List<Word> get studyWords => data!.studyWords;
@@ -132,8 +152,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
   Word get currentWord => session.currentWord(studyWords);
 
   Future<void> editWord() async {
-    // final result = await Navigator.push<bool>(
-    // final result = await Navigator.push<Word>(
     final Word? result = await Navigator.push(
       context,
 
@@ -146,40 +164,6 @@ class _FlashcardPageState extends State<FlashcardPage> {
       ),
     );
 
-    // if (result == true) {
-    //   setState(() {});
-    // }
-    // if (result is Word) {
-    //   final updatedStudyWords = List<Word>.from(studyWords);
-
-    //   updatedStudyWords[session.currentIndex] = result;
-
-    //   final updatedOriginalWords = originalWords.map((word) {
-    //     if (word.id == result.id) {
-    //       return result;
-    //     }
-
-    //     return word;
-    //   }).toList();
-
-    //   data = FlashcardData(
-    //     settings: data!.settings,
-
-    //     originalWords: updatedOriginalWords,
-
-    //     studyWords: updatedStudyWords,
-
-    //     loopCards: loopCards,
-
-    //     randomOrder: randomOrder,
-
-    //     silentMode: silentMode,
-
-    //     frontSide: frontSide,
-    //   );
-
-    //   setState(() {});
-    // }
     if (result != null) {
       final updatedStudyWords = List<Word>.from(studyWords);
 
@@ -308,16 +292,28 @@ class _FlashcardPageState extends State<FlashcardPage> {
     );
   }
 
-  Future<void> playAudio() async {
-    // print('FLASHCARD playAudio()');
+  // Future<void> playAudio() async {
+  //   // print('FLASHCARD playAudio()');
 
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.play(audioFile);
+  // }
+
+  Future<void> playAudio() async {
     final audioFile = currentWord.audioFile;
 
     if (audioFile == null || audioFile.isEmpty) {
       return;
     }
 
-    await audioService.play(audioFile);
+    final path = await audioStorage.getAudioPath(audioFile);
+
+    await audioService.play(path);
   }
 
   Future<void> previousCard() async {

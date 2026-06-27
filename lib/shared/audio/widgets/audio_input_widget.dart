@@ -96,10 +96,15 @@ class AudioInputWidget extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
+            // Text(
+            //   controller.selectedAudioFile == null
+            //       ? 'No audio selected'
+            //       : controller.selectedAudioFile!.split('\\').last,
+            // ),
             Text(
-              controller.selectedAudioFile == null
+              controller.audioId == null
                   ? 'No audio selected'
-                  : controller.selectedAudioFile!.split('\\').last,
+                  : controller.audioId!,
             ),
 
             const SizedBox(height: 12),

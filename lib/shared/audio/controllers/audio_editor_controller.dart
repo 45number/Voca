@@ -11,6 +11,9 @@ import '../models/audio_edit_result.dart';
 import '../exporters/audio_exporter.dart';
 import '../exporters/passthrough_exporter.dart';
 
+import '../services/audio_storage_service.dart';
+import 'package:uuid/uuid.dart';
+
 class AudioEditorController extends ChangeNotifier {
   final player = AudioPlayerService();
 
@@ -19,6 +22,10 @@ class AudioEditorController extends ChangeNotifier {
   final trimService = AudioTrimService();
 
   final waveformExtractor = WaveformExtractorService();
+
+  final audioStorage = AudioStorageService();
+
+  final _uuid = Uuid();
 
   AudioEditorController({AudioExporter? exporter})
     : exporter = exporter ?? PassthroughExporter();
@@ -33,6 +40,10 @@ class AudioEditorController extends ChangeNotifier {
 
   String? path;
 
+  // String? get selectedAudioFile => path;
+  // String? selectedAudioFile;
+  String? audioId;
+
   Duration duration = Duration.zero;
 
   int trimStart = 0;
@@ -45,19 +56,28 @@ class AudioEditorController extends ChangeNotifier {
 
   bool isRecording = false;
 
-  // String? get selectedAudioFile => path;
-  String? selectedAudioFile;
+  // bool _ownsSelectedAudio = false;
 
-  bool _ownsSelectedAudio = false;
+  // bool get ownsSelectedAudio => _ownsSelectedAudio;
 
-  bool get ownsSelectedAudio => _ownsSelectedAudio;
+  bool _temporaryAudio = false;
+
+  bool get temporaryAudio => _temporaryAudio;
 
   List<double> waveform = [];
 
   List<double> liveWaveform = [];
 
+  // void load({
+  //   required String path,
+  //   required List<double> samples,
+  //   required int trimStart,
+  //   required int trimEnd,
+  //   required Duration duration,
+  // }) {
   void load({
     required String path,
+    String? audioId,
     required List<double> samples,
     required int trimStart,
     required int trimEnd,
@@ -65,7 +85,8 @@ class AudioEditorController extends ChangeNotifier {
   }) {
     this.path = path;
 
-    selectedAudioFile = path;
+    // selectedAudioFile = path;
+    this.audioId = audioId;
 
     this.duration = duration;
 
@@ -77,7 +98,7 @@ class AudioEditorController extends ChangeNotifier {
 
     playhead = trimStart.toDouble();
 
-    notifyListeners();
+    // notifyListeners();
   }
 
   void setTrimStart(int value) {
@@ -213,10 +234,23 @@ class AudioEditorController extends ChangeNotifier {
   //   super.dispose();
   // }
 
+  // @override
+  // void dispose() {
+  //   // cleanupSelectedAudio();
+  //   // cleanupTemporaryAudio();
+
+  //   unawaited(cleanupTemporaryAudio());
+
+  //   playheadSubscription?.cancel();
+
+  //   amplitudeSubscription?.cancel();
+
+  //   player.dispose();
+
+  //   super.dispose();
+  // }
   @override
   void dispose() {
-    cleanupSelectedAudio();
-
     playheadSubscription?.cancel();
 
     amplitudeSubscription?.cancel();
@@ -282,10 +316,56 @@ class AudioEditorController extends ChangeNotifier {
     return true;
   }
 
-  Future<bool> stopRecording() async {
-    final path = await recorder.stopRecording();
+  // Future<bool> stopRecording() async {
+  //   final path = await recorder.stopRecording();
 
-    if (path == null) {
+  //   if (path == null) {
+  //     return false;
+  //   }
+
+  //   await amplitudeSubscription?.cancel();
+  //   amplitudeSubscription = null;
+
+  //   final normalizedWaveform = liveWaveform.map((v) {
+  //     return ((v + 60) / 60).clamp(0.05, 1.0);
+  //   }).toList();
+
+  //   final start = trimService.findSpeechStart(normalizedWaveform);
+
+  //   final end = trimService.findSpeechEnd(normalizedWaveform);
+
+  //   final audioDuration = await player.getDuration(path) ?? Duration.zero;
+
+  //   isRecording = false;
+
+  //   await cleanupSelectedAudio();
+
+  //   selectedAudioFile = path;
+  //   _ownsSelectedAudio = true;
+
+  //   waveform = normalizedWaveform;
+
+  //   liveWaveform.clear();
+
+  //   load(
+  //     path: path,
+  //     samples: waveform,
+  //     trimStart: start,
+  //     trimEnd: end,
+  //     duration: audioDuration,
+  //   );
+
+  //   notifyListeners();
+
+  //   return true;
+  // }
+
+  Future<bool> stopRecording() async {
+    await cleanupTemporaryAudio();
+
+    final recordedPath = await recorder.stopRecording();
+
+    if (recordedPath == null) {
       return false;
     }
 
@@ -300,31 +380,50 @@ class AudioEditorController extends ChangeNotifier {
 
     final end = trimService.findSpeechEnd(normalizedWaveform);
 
-    final audioDuration = await player.getDuration(path) ?? Duration.zero;
+    final duration = await player.getDuration(recordedPath) ?? Duration.zero;
 
-    // isRecording = false;
+    ///////////////////////////////////////////////////////
 
-    // selectedAudioFile = path;
+    final id = "${_uuid.v4()}.m4a";
 
-    // waveform = normalizedWaveform;
+    final localPath = await audioStorage.getAudioPath(id);
 
-    isRecording = false;
+    await File(recordedPath).copy(localPath);
 
-    await cleanupSelectedAudio();
+    try {
+      final file = File(recordedPath);
 
-    selectedAudioFile = path;
-    _ownsSelectedAudio = true;
+      if (await file.exists()) {
+        await file.delete();
+      }
+    } catch (_) {}
+
+    ///////////////////////////////////////////////////////
+
+    audioId = id;
+
+    _temporaryAudio = true;
+
+    path = localPath;
 
     waveform = normalizedWaveform;
 
     liveWaveform.clear();
 
+    isRecording = false;
+
     load(
-      path: path,
+      path: localPath,
+
+      audioId: id,
+
       samples: waveform,
+
       trimStart: start,
+
       trimEnd: end,
-      duration: audioDuration,
+
+      duration: duration,
     );
 
     notifyListeners();
@@ -332,7 +431,30 @@ class AudioEditorController extends ChangeNotifier {
     return true;
   }
 
+  // Future<bool> importAudioFile() async {
+  //   final result = await FilePicker.platform.pickFiles(
+  //     type: FileType.custom,
+  //     allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
+  //   );
+
+  //   if (result == null) {
+  //     return false;
+  //   }
+
+  //   final path = result.files.single.path;
+
+  //   if (path == null) {
+  //     return false;
+  //   }
+
+  //   await loadFile(path);
+
+  //   return true;
+  // }
+
   Future<bool> importAudioFile() async {
+    await cleanupTemporaryAudio();
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3', 'wav', 'm4a', 'aac', 'ogg'],
@@ -342,33 +464,64 @@ class AudioEditorController extends ChangeNotifier {
       return false;
     }
 
-    final path = result.files.single.path;
+    final pickedPath = result.files.single.path;
 
-    if (path == null) {
+    if (pickedPath == null) {
       return false;
     }
 
-    await loadFile(path);
+    ////////////////////////////////////////////
+
+    // final id = "${Uuid().v4()}.m4a";
+    final id = "${_uuid.v4()}.m4a";
+
+    final localPath = await audioStorage.getAudioPath(id);
+
+    await File(pickedPath).copy(localPath);
+
+    ////////////////////////////////////////////
+
+    audioId = id;
+
+    _temporaryAudio = true;
+
+    await loadFile(path: localPath, audioId: id);
 
     return true;
   }
 
   // Future<void> loadFile(String path) async {
-  //   final waveform = await waveformExtractor.extract(path);
-  Future<void> loadFile(String path) async {
-    await cleanupSelectedAudio();
+  //   await cleanupSelectedAudio();
 
+  //   final waveform = await waveformExtractor.extract(path);
+  //   final start = trimService.findSpeechStart(waveform);
+  //   final end = trimService.findSpeechEnd(waveform);
+  //   final audioDuration = await player.getDuration(path) ?? Duration.zero;
+
+  //   // selectedAudioFile = path;
+  //   selectedAudioFile = path;
+  //   _ownsSelectedAudio = false;
+
+  //   load(
+  //     path: path,
+  //     samples: waveform,
+  //     trimStart: start,
+  //     trimEnd: end,
+  //     duration: audioDuration,
+  //   );
+
+  //   notifyListeners();
+  // }
+
+  Future<void> loadFile({required String path, String? audioId}) async {
     final waveform = await waveformExtractor.extract(path);
     final start = trimService.findSpeechStart(waveform);
     final end = trimService.findSpeechEnd(waveform);
     final audioDuration = await player.getDuration(path) ?? Duration.zero;
 
-    // selectedAudioFile = path;
-    selectedAudioFile = path;
-    _ownsSelectedAudio = false;
-
     load(
       path: path,
+      audioId: audioId,
       samples: waveform,
       trimStart: start,
       trimEnd: end,
@@ -391,28 +544,28 @@ class AudioEditorController extends ChangeNotifier {
     return "$minutes:$seconds.$millis";
   }
 
-  Future<void> cleanupSelectedAudio() async {
-    if (!_ownsSelectedAudio || selectedAudioFile == null) {
-      return;
-    }
+  // Future<void> cleanupSelectedAudio() async {
+  //   if (!_ownsSelectedAudio || selectedAudioFile == null) {
+  //     return;
+  //   }
 
-    try {
-      final file = File(selectedAudioFile!);
+  //   try {
+  //     final file = File(selectedAudioFile!);
 
-      if (await file.exists()) {
-        await file.delete();
-      }
-    } catch (e) {
-      print('Failed to delete temp audio: $e');
-    }
+  //     if (await file.exists()) {
+  //       await file.delete();
+  //     }
+  //   } catch (e) {
+  //     print('Failed to delete temp audio: $e');
+  //   }
 
-    selectedAudioFile = null;
-    _ownsSelectedAudio = false;
-  }
+  //   selectedAudioFile = null;
+  //   _ownsSelectedAudio = false;
+  // }
 
-  void markSaved() {
-    _ownsSelectedAudio = false;
-  }
+  // void markSaved() {
+  //   _ownsSelectedAudio = false;
+  // }
 
   // Future<void> reset() async {
   //   await cleanupSelectedAudio();
@@ -443,7 +596,8 @@ class AudioEditorController extends ChangeNotifier {
   // }
 
   Future<void> reset() async {
-    await cleanupSelectedAudio();
+    // await cleanupSelectedAudio();
+    await cleanupTemporaryAudio();
 
     samples = [];
 
@@ -451,9 +605,9 @@ class AudioEditorController extends ChangeNotifier {
 
     liveWaveform = [];
 
-    selectedAudioFile = null;
+    // selectedAudioFile = null;
 
-    path = null;
+    // path = null;
 
     duration = Duration.zero;
 
@@ -468,5 +622,36 @@ class AudioEditorController extends ChangeNotifier {
     isRecording = false;
 
     notifyListeners();
+  }
+
+  Future<void> cleanupTemporaryAudio() async {
+    if (!_temporaryAudio) {
+      return;
+    }
+
+    if (audioId == null) {
+      return;
+    }
+
+    try {
+      await audioStorage.delete(audioId!);
+    } catch (e) {
+      debugPrint('cleanupTemporaryAudio: $e');
+    }
+
+    audioId = null;
+    path = null;
+    samples = [];
+    waveform = [];
+    liveWaveform = [];
+    duration = Duration.zero;
+    trimStart = 0;
+    trimEnd = 0;
+    playhead = 0;
+    _temporaryAudio = false;
+  }
+
+  void markSaved() {
+    _temporaryAudio = false;
   }
 }

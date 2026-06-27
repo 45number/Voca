@@ -20,6 +20,8 @@ import '../folders/folder_controller.dart';
 
 import '../words/word_editor_page.dart';
 
+import '../../shared/audio/services/audio_storage_service.dart';
+
 class SpellingPage extends StatefulWidget {
   final List<Word> words;
 
@@ -49,6 +51,8 @@ class _SpellingPageState extends State<SpellingPage> {
   final checker = SpellingChecker();
 
   final audioService = AudioPlayerService();
+
+  final audioStorage = AudioStorageService();
 
   final textController = TextEditingController();
 
@@ -184,6 +188,16 @@ class _SpellingPageState extends State<SpellingPage> {
     setState(() {});
   }
 
+  // Future<void> preloadCurrentAudio() async {
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.preload(audioFile);
+  // }
+
   Future<void> preloadCurrentAudio() async {
     final audioFile = currentWord.audioFile;
 
@@ -191,7 +205,9 @@ class _SpellingPageState extends State<SpellingPage> {
       return;
     }
 
-    await audioService.preload(audioFile);
+    final path = await audioStorage.getAudioPath(audioFile);
+
+    await audioService.preload(path);
   }
 
   @override
@@ -378,16 +394,28 @@ class _SpellingPageState extends State<SpellingPage> {
     setState(() {});
   }
 
-  Future<void> playAudio() async {
-    // print('SPELLING playAudio()');
+  // Future<void> playAudio() async {
+  //   // print('SPELLING playAudio()');
 
+  //   final audioFile = currentWord.audioFile;
+
+  //   if (audioFile == null || audioFile.isEmpty) {
+  //     return;
+  //   }
+
+  //   await audioService.play(audioFile);
+  // }
+
+  Future<void> playAudio() async {
     final audioFile = currentWord.audioFile;
 
     if (audioFile == null || audioFile.isEmpty) {
       return;
     }
 
-    await audioService.play(audioFile);
+    final path = await audioStorage.getAudioPath(audioFile);
+
+    await audioService.play(path);
   }
 
   Future<void> previousWord() async {

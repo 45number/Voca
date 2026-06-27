@@ -1,4 +1,6 @@
 //Theme imports:
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 //Database imports:
@@ -51,14 +53,16 @@ class _WordEditorState extends State<WordEditor> {
   //     return;
   //   }
 
-  //   final word = widget.initialWord;
+  //   final word = widget.initialWord!;
 
   //   wordController.text = word.word;
 
   //   translationController.text = word.translation;
 
-  //   if (word.audioFile != null) {
-  //     await editor.loadFile(word.audioFile);
+  //   final audioFile = word.audioFile;
+
+  //   if (audioFile != null && audioFile.isNotEmpty) {
+  //     await editor.loadFile(audioFile);
   //   }
   // }
 
@@ -68,20 +72,20 @@ class _WordEditorState extends State<WordEditor> {
     }
 
     final word = widget.initialWord!;
-
     wordController.text = word.word;
-
     translationController.text = word.translation;
-
     final audioFile = word.audioFile;
-
-    if (audioFile != null && audioFile.isNotEmpty) {
-      await editor.loadFile(audioFile);
+    if (audioFile == null || audioFile.isEmpty) {
+      return;
     }
+    final path = await editor.audioStorage.getAudioPath(audioFile);
+    await editor.loadFile(path: path, audioId: audioFile);
   }
 
   @override
   void dispose() {
+    unawaited(editor.cleanupTemporaryAudio());
+
     wordController.dispose();
 
     translationController.dispose();
@@ -89,6 +93,7 @@ class _WordEditorState extends State<WordEditor> {
     wordFocusNode.dispose();
 
     editor.dispose();
+
     super.dispose();
   }
 
@@ -97,14 +102,6 @@ class _WordEditorState extends State<WordEditor> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // TextField(
-        //   controller: wordController,
-        //   textDirection: TextDirection.rtl,
-        //   decoration: const InputDecoration(
-        //     labelText: 'Word',
-        //     border: OutlineInputBorder(),
-        //   ),
-        // ),
         TextField(
           controller: wordController,
 
@@ -184,67 +181,6 @@ class _WordEditorState extends State<WordEditor> {
     await editor.importAudioFile();
   }
 
-  // Future<void> save() async {
-  //   final word = wordController.text.trim();
-  //   final translation = translationController.text.trim();
-  //   if (word.isEmpty || translation.isEmpty) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Word and translation are required')),
-  //     );
-
-  //     return;
-  //   }
-  //   setState(() {
-  //     isSaving = true;
-  //   });
-
-  //   try {
-  //     await wordRepository.createWord(
-  //       folderId: widget.folderId,
-  //       word: word,
-  //       translation: translation,
-  //       audioFile: editor.selectedAudioFile,
-  //     );
-
-  //     // Сообщаем контроллеру, что файл успешно сохранен
-  //     editor.markSaved();
-
-  //     // Очищаем редактор аудио
-  //     await editor.reset();
-
-  //     // Очищаем поля ввода
-  //     wordController.clear();
-  //     translationController.clear();
-
-  //     wordFocusNode.requestFocus();
-
-  //     if (!mounted) {
-  //       return;
-  //     }
-
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('Word saved'),
-  //         duration: Duration(seconds: 2),
-  //       ),
-  //     );
-  //   } catch (e) {
-  //     if (!mounted) {
-  //       return;
-  //     }
-
-  //     ScaffoldMessenger.of(
-  //       context,
-  //     ).showSnackBar(SnackBar(content: Text('Failed to save word: $e')));
-  //   } finally {
-  //     if (mounted) {
-  //       setState(() {
-  //         isSaving = false;
-  //       });
-  //     }
-  //   }
-  // }
-
   Future<void> save() async {
     final word = wordController.text.trim();
     final translation = translationController.text.trim();
@@ -270,7 +206,8 @@ class _WordEditorState extends State<WordEditor> {
 
           translation: translation,
 
-          audioFile: editor.selectedAudioFile,
+          // audioFile: editor.selectedAudioFile,
+          audioFile: editor.audioId,
         );
 
         editor.markSaved();
@@ -291,7 +228,7 @@ class _WordEditorState extends State<WordEditor> {
 
           translation: translation,
 
-          audioFile: Value(editor.selectedAudioFile),
+          audioFile: Value(editor.audioId),
         );
 
         Navigator.pop(context, updatedWord);
@@ -305,7 +242,7 @@ class _WordEditorState extends State<WordEditor> {
 
           translation: translation,
 
-          audioFile: editor.selectedAudioFile,
+          audioFile: editor.audioId,
         );
 
         editor.markSaved();
@@ -321,9 +258,6 @@ class _WordEditorState extends State<WordEditor> {
 
       if (!mounted) return;
 
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(content: Text(isEditMode ? 'Word updated' : 'Word saved')),
-      // );
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Word saved'),
